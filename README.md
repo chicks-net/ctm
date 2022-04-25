@@ -2,12 +2,20 @@
 
 Control Time Machines - control timemachinescorp.com clocks
 
-Status: trying to get UDP to work in Go.
+Status: UDP communication is working.  Translating binary packet into golang struct is next job.
 
 ## Usage
 
+I'd like for it to work like this:
+
 ```
-ctm
+ctm $CLOCK_IP
+```
+
+For now I'm testing with
+
+```
+go run main.go $CLOCK_IP
 ```
 
 ## References
