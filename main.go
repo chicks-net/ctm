@@ -2,13 +2,29 @@ package main
 
 import (
     "bufio"
+    "bytes"
+    "encoding/binary"
     "encoding/hex"
     "fmt"
     "net"
     "os"
 )
 
-const maxBufferSize = 64
+type Response struct {
+    DeviceType  uint8
+    ClientIP    [4]uint8
+    MAC_address [6]uint8
+    FirmwareVer [2]uint8
+    NTPSyncCnt  uint16
+    DisplayTime [4]uint8
+    DisplayMode uint8
+    Downtimer   uint8
+    unused      [2]uint8
+    WifiSignal  uint8
+    DeviceName  [16]uint8
+}
+
+const maxBufferSize = 64 // the biggest response packet is 40 bytes
 const device_query = "\xa1\x04\xb2"
 
 func main() {
@@ -29,6 +45,15 @@ func main() {
     if err == nil {
 	fmt.Println("read response")
 	fmt.Printf("%s", hex.Dump(udp_resp))
+
+	struct_resp := Response{}
+	buf := bytes.NewReader(udp_resp)
+	err = binary.Read(buf, binary.BigEndian, &struct_resp)
+	if err != nil {
+            panic(err)
+        }
+	fmt.Println("code more....")
+
     } else {
         fmt.Printf("Some error %v\n", err)
     }
