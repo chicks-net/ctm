@@ -2,7 +2,7 @@
 
 Control Time Machines (`ctm`) lets you control [timemachinescorp.com](https://timemachinescorp.com) clocks
 
-Status: Hacked to retrieve status from API1.1 clock, but working on how to update clock firmware without Windows.
+Status: Can retrieve status from API1.1 clock.  Next step is to implement subcommands and timer control sequences.
 
 ## Usage
 
@@ -24,16 +24,17 @@ Output looks like:
 connected
 sent query
 read response
-00000000  01 c0 a8 2a cc 70 b3 d5  75 68 e2 05 00 10 db 12  |...*.p..uh......|
-00000010  0e 32 50 4f 45 5f 43 6c  6f 63 6b 5f 55 54 43 00  |.2POE_Clock_UTC.|
+00000000  01 c0 a8 2a cc 70 b3 d5  75 68 e2 05 00 10 f2 16  |...*.p..uh......|
+00000010  04 14 50 4f 45 5f 43 6c  6f 63 6b 5f 55 54 43 00  |..POE_Clock_UTC.|
 00000020  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
 00000030  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+packet length 35 (API version 1.x)
 Type 1
 IP c0a82acc
 MAC 70b3d57568e2
 Ver 0500
-Syncs 4315
-Time {18 14 50}
+Syncs 4338
+Time {22 4 20}
 Name POE_Clock_UTC
 ```
 
