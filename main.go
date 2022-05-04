@@ -10,11 +10,11 @@ import (
     "os"
 )
 
-type Time struct {
+// API 1.x structures
+type Time10 struct {
     Hour     uint8
     Minute   uint8
     Second   uint8
-//    Tenths   uint8
 }
 
 type Response10 struct {
@@ -23,8 +23,16 @@ type Response10 struct {
     MAC_address [6]uint8
     FirmwareVer [2]uint8
     NTPSyncCnt  uint16
-    DisplayTime Time
+    DisplayTime Time10
     DeviceName  [16]uint8
+}
+
+// API 2.x structures
+type Time20 struct {
+    Hour     uint8
+    Minute   uint8
+    Second   uint8
+    Tenths   uint8
 }
 
 type Response20 struct {
@@ -33,7 +41,7 @@ type Response20 struct {
     MAC_address [6]uint8
     FirmwareVer [2]uint8
     NTPSyncCnt  uint16
-    DisplayTime Time
+    DisplayTime Time20
     DisplayMode uint8
     Downtimer   uint8
     Unused      [2]uint8
