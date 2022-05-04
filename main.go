@@ -10,6 +10,8 @@ import (
     "os"
 )
 
+type IPAddr [4]byte
+
 // API 1.x structures
 type Time10 struct {
     Hour     uint8
@@ -19,7 +21,7 @@ type Time10 struct {
 
 type Response10 struct {
     DeviceType  uint8
-    ClientIP    [4]uint8
+    ClientIP    IPAddr
     MAC_address [6]uint8
     FirmwareVer [2]uint8
     NTPSyncCnt  uint16
@@ -37,7 +39,7 @@ type Time20 struct {
 
 type Response20 struct {
     DeviceType  uint8
-    ClientIP    [4]uint8
+    ClientIP    IPAddr
     MAC_address [6]uint8
     FirmwareVer [2]uint8
     NTPSyncCnt  uint16
@@ -49,8 +51,12 @@ type Response20 struct {
     DeviceName  [16]uint8
 }
 
-const maxBufferSize = 64 // the biggest response packet is 40 bytes
+const maxBufferSize = 48 // the biggest response packet is 40 bytes
 const device_query = "\xa1\x04\xb2"
+
+func (ip IPAddr) String() string {
+    return fmt.Sprintf("%v.%v.%v.%v", int(ip[0]), int(ip[1]), int(ip[2]), int(ip[3]))
+}
 
 func main() {
     udp_resp :=  make([]byte, maxBufferSize) // buffer for UDP responses
@@ -83,7 +89,7 @@ func main() {
             }
 
             fmt.Printf("Type %x\n", struct_resp.DeviceType)
-            fmt.Printf("IP %x\n", struct_resp.ClientIP)
+            fmt.Printf("IP %v\n", struct_resp.ClientIP)
             fmt.Printf("MAC %x\n", struct_resp.MAC_address)
             fmt.Printf("Ver %x\n", struct_resp.FirmwareVer)
             fmt.Printf("Syncs %d\n", struct_resp.NTPSyncCnt)
