@@ -38,6 +38,10 @@ Time {22 4 20}
 Name POE_Clock_UTC
 ```
 
+## Known bugs
+
+* There is no timeout yet so you will need to hit <kbd>Ctrl</kbd>-<kbd>C</kbd> to exit if you put in an invalid host or IP.
+
 ## References
 
 * [TimeMachines' Locator Protocol API version 2.0](https://www.timemachinescorp.com/wp-content/uploads/TimeMachinesControlAPI.pdf)
