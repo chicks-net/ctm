@@ -66,7 +66,7 @@ func main() {
 
     conn, err := net.Dial("udp", clock_addrport)
     if err != nil {
-        fmt.Printf("Some error %v", err)
+        fmt.Printf("Dial error %v\n", err)
         return
     }
     fmt.Println("connected")
