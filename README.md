@@ -45,4 +45,5 @@ Name POE_Clock_UTC
 ## References
 
 * [TimeMachines' Locator Protocol API version 2.0](https://www.timemachinescorp.com/wp-content/uploads/TimeMachinesControlAPI.pdf)
-* [the other repo on github for these clocks](https://github.com/ggmp3/Q-SYS-CSS-TimeMachines-Clock-B-Series-) - this looks pretty cool actually, but the language is obscure to me and I'm unlikely to license to devevelopment environment.
+* I don't have a URL for the API v1.1 docs, but TimeMachinesCorp sent me a copy and not much has changed.
+* [the other repo on github for these clocks](https://github.com/ggmp3/Q-SYS-CSS-TimeMachines-Clock-B-Series-) - this looks pretty cool actually, but the language is obscure to me and I'm unlikely to license the development environment.
