@@ -15,26 +15,24 @@ ctm $CLOCK_IP
 For now I'm testing with
 
 ```
-go run main.go $CLOCK_IP
+go run main.go status $CLOCK_IP
 ```
 
 Output looks like:
 
 ```
-connected
-sent query
-read response
-00000000  01 c0 a8 2a cc 70 b3 d5  75 68 e2 05 00 10 f2 16  |...*.p..uh......|
-00000010  04 14 50 4f 45 5f 43 6c  6f 63 6b 5f 55 54 43 00  |..POE_Clock_UTC.|
+sent status query to 192.168.42.204:7372
+response hexdump:
+00000000  01 c0 a8 2a cc 70 b3 d5  75 68 e2 05 00 12 2e 02  |...*.p..uh......|
+00000010  2a 2c 50 4f 45 5f 43 6c  6f 63 6b 5f 55 54 43 00  |*,POE_Clock_UTC.|
 00000020  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
-00000030  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
 packet length 35 (API version 1.x)
 Type 1
-IP c0a82acc
+IP 192.168.42.204
 MAC 70b3d57568e2
 Ver 0500
-Syncs 4338
-Time {22 4 20}
+Syncs 4654
+Time {2 42 44}
 Name POE_Clock_UTC
 ```
 

@@ -58,24 +58,20 @@ func (ip IPAddr) String() string {
     return fmt.Sprintf("%v.%v.%v.%v", int(ip[0]), int(ip[1]), int(ip[2]), int(ip[3]))
 }
 
-func main() {
-    udp_resp :=  make([]byte, maxBufferSize) // buffer for UDP responses
-
-    clock_address := os.Args[1]
-    clock_addrport := clock_address + ":7372"
-
-    conn, err := net.Dial("udp", clock_addrport)
+func get_status(address string) {
+    conn, err := net.Dial("udp", address)
+    defer conn.Close()
     if err != nil {
         fmt.Printf("Dial error %v\n", err)
         return
     }
-    fmt.Println("connected")
     fmt.Fprintf(conn, device_query)
-    fmt.Println("sent query")
+    fmt.Printf("sent status query to %s\n", address)
 
+    udp_resp :=  make([]byte, maxBufferSize) // buffer for UDP responses
     packet_size, err := bufio.NewReader(conn).Read(udp_resp)
     if err == nil {
-	fmt.Println("read response")
+	fmt.Println("response hexdump:")
 	fmt.Printf("%s", hex.Dump(udp_resp))
 
 	if packet_size == 35 {
@@ -118,10 +114,25 @@ func main() {
 	    fmt.Printf("packet length %d\n", packet_size)
 	    panic("unexpected number of bytes returned so we don't know which protocol it is talking")
 	}
-
-	fmt.Println("code more....")
     } else {
         fmt.Printf("Some error %v\n", err)
     }
-    conn.Close()
+}
+
+func main() {
+    if len(os.Args) < 3 {
+        fmt.Println("expected arguments of subcommand and address")
+        os.Exit(1)
+    }
+
+    clock_address := os.Args[2]
+    clock_addrport := clock_address + ":7372"
+    // fmt.Println(clock_addrport)
+
+    switch os.Args[1] {
+        case "status":
+	    get_status(clock_addrport)
+	default:
+	    panic("undefined subcommand")
+    }
 }
