@@ -2,23 +2,33 @@
 
 Control Time Machines (`ctm`) lets you control [timemachinescorp.com](https://timemachinescorp.com) clocks
 
-Status: Can retrieve status from API1.1 clock.  Next step is to implement subcommands and timer control sequences.
+Status: Can retrieve status, use uptimers and go back to time mode with an API1.1 clock.
+
+## Install
+
+I'd like to get this in homebrew and Fedora repos eventually, but for now there is a `Makefile`
+that will build the program for you.  So in the main repo directory you should be able to run `make`
+and get a build of `ctm` for your platform.
 
 ## Usage
 
-I'd like for it to work like this:
+Invocation:
 
 ```
-ctm $CLOCK_IP
+ctm $SUBCOMMAND $CLOCK_IP
 ```
 
-For now I'm testing with
+Subcommands:
+* `status` returns the clock's status
+* `time` puts the clock into time display mode
+* `up_ms` puts the clock into uptimer mode displaying minutes and seconds
+* `up_hms` puts the clock into uptimer mode displaying hours, minutes and seconds
+* `up_run` tells the uptimer to run
+* `up_pause` tells the uptimer to pause
+* `up_reset_ms` resets the uptimer displaying minutes and seconds
+* `up_reset_hms` resets the uptimer displaying hours, minutes and seconds
 
-```
-go run main.go status $CLOCK_IP
-```
-
-Output looks like:
+Status output looks like:
 
 ```
 sent status query to 192.168.42.204:7372
@@ -36,9 +46,31 @@ Time {2 42 44}
 Name POE_Clock_UTC
 ```
 
+Using the uptimer looks like:
+
+```
+$ ./ctm up_ms 192.168.42.204
+sent command up_mode_ms to 192.168.42.204:7372
+acked by clock
+$ ./ctm up_run 192.168.42.204
+sent command up_mode_run to 192.168.42.204:7372
+acked by clock
+$ ./ctm time 192.168.42.204
+sent command time_mode to 192.168.42.204:7372
+acked by clock
+```
+
 ## Known bugs
 
 * There is no timeout yet so you will need to hit <kbd>Ctrl</kbd>-<kbd>C</kbd> to exit if you put in an invalid host or IP.
+* Unimplemented:
+    * downtimers - doable but not coded yet
+    * setting dotmatrix text - I don't have a device to test with
+    * setting timers while running - doable but not coded yet
+    * exec stored program (API2.0)
+    * relay close (API2.0)
+    * dimmer set (API2.0)
+    * color set for RGB (API2.0)
 
 ## References
 
