@@ -94,22 +94,32 @@ func get_status(address string) {
 	} else if packet_size == 40 {
             // API version 2.0
 	    fmt.Printf("packet length %d (API version 2.0)\n", packet_size)
-	    // struct_resp := Response20{}
+	    struct_resp := Response20{}
+
 	    fmt.Println("need a clock to test....")
 	    panic("unimplemented API 2.0")
-//            fmt.Printf("Mode %x\n", struct_resp.DisplayMode)
-//            if (struct_resp.DisplayMode & 0x40) == 0x40 {
-//	        fmt.Println("\trunning")
-//	    } else {
-//	        fmt.Println("\tstopped")
-//	    }
-//            if (struct_resp.DisplayMode & 0x80) == 0x80 {
-//	        fmt.Println("\tdisplay M:S:Tenths")
-//	    } else {
-//	        fmt.Println("\tdisplay H:M:S")
-//	    }
-//            fmt.Printf("Down %x\n", struct_resp.Downtimer)
-//            fmt.Printf("Wifi %x\n", struct_resp.WifiSignal)
+
+            fmt.Printf("Type %x\n", struct_resp.DeviceType)
+            fmt.Printf("IP %v\n", struct_resp.ClientIP)
+            fmt.Printf("MAC %x\n", struct_resp.MAC_address)
+            fmt.Printf("Ver %x\n", struct_resp.FirmwareVer)
+            fmt.Printf("Syncs %d\n", struct_resp.NTPSyncCnt)
+            fmt.Printf("Time %d\n", struct_resp.DisplayTime)
+            fmt.Printf("Name %s\n", struct_resp.DeviceName)
+
+            fmt.Printf("Mode %x\n", struct_resp.DisplayMode)
+            if (struct_resp.DisplayMode & 0x40) == 0x40 {
+	        fmt.Println("\trunning")
+	    } else {
+	        fmt.Println("\tstopped")
+	    }
+            if (struct_resp.DisplayMode & 0x80) == 0x80 {
+	        fmt.Println("\tdisplay M:S:Tenths")
+	    } else {
+	        fmt.Println("\tdisplay H:M:S")
+	    }
+            fmt.Printf("Down %x\n", struct_resp.Downtimer)
+            fmt.Printf("Wifi %x\n", struct_resp.WifiSignal)
         } else {
 	    fmt.Printf("packet length %d\n", packet_size)
 	    panic("unexpected number of bytes returned so we don't know which protocol it is talking")
