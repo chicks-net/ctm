@@ -58,14 +58,16 @@ var (
 )
 
 func init() {
-    locator_commands["device_query"]  = "\xa1\x04\xb2"
-    locator_commands["up_mode_ms"]    = "\xa2\x00\x00"
-    locator_commands["up_mode_hms"]   = "\xa2\x01\x00"
-    locator_commands["up_mode_pause"] = "\xa3\x00\x00"
-    locator_commands["up_mode_run"]   = "\xa3\x01\x00"
-    locator_commands["up_reset_ms"]   = "\xa4\x00\x00"
-    locator_commands["up_reset_hms"]  = "\xa4\x01\x00"
-    locator_commands["time_mode"]     = "\xa8\x01\x00"
+    locator_commands["device_query"]    = "\xa1\x04\xb2"
+    locator_commands["up_mode_ms"]      = "\xa2\x00\x00"
+    locator_commands["up_mode_hms"]     = "\xa2\x01\x00"
+    locator_commands["up_mode_pause"]   = "\xa3\x00\x00"
+    locator_commands["up_mode_run"]     = "\xa3\x01\x00"
+    locator_commands["up_reset_ms"]     = "\xa4\x00\x00"
+    locator_commands["up_reset_hms"]    = "\xa4\x01\x00"
+    locator_commands["down_mode_pause"] = "\xa6\x00\x00"
+    locator_commands["down_mode_run"]   = "\xa6\x01\x00"
+    locator_commands["time_mode"]       = "\xa8\x01\x00"
 }
 
 func (ip IPAddr) String() string {
@@ -156,9 +158,16 @@ func send_command(address string, command string) {
     udp_resp :=  make([]byte, maxBufferSize) // buffer for UDP responses
     packet_size, err := bufio.NewReader(conn).Read(udp_resp)
     if err == nil {
-        fmt.Printf("packet length %d\n", packet_size)
-	fmt.Println("response hexdump:")
-	fmt.Printf("%s", hex.Dump(udp_resp))
+	if packet_size != 2 {
+            fmt.Printf("packet length %d\n", packet_size)
+	    panic("unexpected packet size in UDP response")
+        }
+	if string(udp_resp[0]) != "A" {
+	    fmt.Println("response hexdump:")
+	    fmt.Printf("%s", hex.Dump(udp_resp))
+	    panic("response does not look like an acknowldgement")
+	}
+	fmt.Println("acked by clock")
     } else {
         fmt.Printf("Some error %v\n", err)
     }
@@ -179,6 +188,18 @@ func main() {
 	    get_status(clock_addrport)
         case "time":
 	    send_command(clock_addrport, "time_mode")
+        case "up_ms":
+	    send_command(clock_addrport, "up_mode_ms")
+        case "up_hms":
+	    send_command(clock_addrport, "up_mode_hms")
+        case "up_run":
+	    send_command(clock_addrport, "up_mode_run")
+        case "up_pause":
+	    send_command(clock_addrport, "up_mode_pause")
+        case "up_reset_ms":
+	    send_command(clock_addrport, "up_reset_ms")
+        case "up_reset_hms":
+	    send_command(clock_addrport, "up_reset_hms")
 	default:
 	    panic("undefined subcommand")
     }
