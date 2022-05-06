@@ -52,7 +52,21 @@ type Response20 struct {
 }
 
 const maxBufferSize = 48 // the biggest response packet is 40 bytes
-const device_query = "\xa1\x04\xb2"
+
+var (
+    locator_commands = make(map[string]string)
+)
+
+func init() {
+    locator_commands["device_query"]  = "\xa1\x04\xb2"
+    locator_commands["up_mode_ms"]    = "\xa2\x00\x00"
+    locator_commands["up_mode_hms"]   = "\xa2\x01\x00"
+    locator_commands["up_mode_pause"] = "\xa3\x00\x00"
+    locator_commands["up_mode_run"]   = "\xa3\x01\x00"
+    locator_commands["up_reset_ms"]   = "\xa4\x00\x00"
+    locator_commands["up_reset_hms"]  = "\xa4\x01\x00"
+    locator_commands["time_mode"]     = "\xa8\x01\x00"
+}
 
 func (ip IPAddr) String() string {
     return fmt.Sprintf("%v.%v.%v.%v", int(ip[0]), int(ip[1]), int(ip[2]), int(ip[3]))
@@ -65,7 +79,7 @@ func get_status(address string) {
         fmt.Printf("Dial error %v\n", err)
         return
     }
-    fmt.Fprintf(conn, device_query)
+    fmt.Fprintf(conn, locator_commands["device_query"])
     fmt.Printf("sent status query to %s\n", address)
 
     udp_resp :=  make([]byte, maxBufferSize) // buffer for UDP responses
@@ -129,6 +143,27 @@ func get_status(address string) {
     }
 }
 
+func send_command(address string, command string) {
+    conn, err := net.Dial("udp", address)
+    defer conn.Close()
+    if err != nil {
+        fmt.Printf("Dial error %v\n", err)
+        return
+    }
+    fmt.Fprintf(conn, locator_commands[command])
+    fmt.Printf("sent command %s to %s\n", command, address)
+
+    udp_resp :=  make([]byte, maxBufferSize) // buffer for UDP responses
+    packet_size, err := bufio.NewReader(conn).Read(udp_resp)
+    if err == nil {
+        fmt.Printf("packet length %d\n", packet_size)
+	fmt.Println("response hexdump:")
+	fmt.Printf("%s", hex.Dump(udp_resp))
+    } else {
+        fmt.Printf("Some error %v\n", err)
+    }
+}
+
 func main() {
     if len(os.Args) < 3 {
         fmt.Println("expected arguments of subcommand and address")
@@ -142,6 +177,8 @@ func main() {
     switch os.Args[1] {
         case "status":
 	    get_status(clock_addrport)
+        case "time":
+	    send_command(clock_addrport, "time_mode")
 	default:
 	    panic("undefined subcommand")
     }
