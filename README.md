@@ -27,6 +27,7 @@ Subcommands:
 * `up_pause` tells the uptimer to pause
 * `up_reset_ms` resets the uptimer displaying minutes and seconds
 * `up_reset_hms` resets the uptimer displaying hours, minutes and seconds
+* `up_set_time H:M:S:tenths:hundreds` sets the uptimer to the hours`:`minutes`:`seconds`:`tenths`:`hundreths and you can drop off any of the smaller units that are irrelevant to you.  If you want no hours you still need to start with `0:`.
 
 Status output looks like:
 

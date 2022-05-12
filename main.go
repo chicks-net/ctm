@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strconv"
+	"strings"
 )
 
 type IPAddr [4]byte
@@ -51,6 +53,17 @@ type Response20 struct {
 	DeviceName  [16]uint8
 }
 
+// Structures for API1.x and API2.x
+
+type SetTimer struct {
+	Command		uint8
+	Hour		uint8
+	Minute		uint8
+	Second		uint8
+	Tenths		uint8
+	Hundredths	uint8
+}
+
 const maxBufferSize = 48 // the biggest response packet is 40 bytes
 
 var (
@@ -68,12 +81,16 @@ func init() {
 	locator_commands["down_mode_pause"] = "\xa6\x00\x00"
 	locator_commands["down_mode_run"] = "\xa6\x01\x00"
 	locator_commands["time_mode"] = "\xa8\x01\x00"
+	locator_commands["up_set_time"] = "\xaa"
+	locator_commands["down_set_time"] = "\xab"
 }
 
+// utility functions - type conversion and defaults
 func (ip IPAddr) String() string {
 	return fmt.Sprintf("%v.%v.%v.%v", int(ip[0]), int(ip[1]), int(ip[2]), int(ip[3]))
 }
 
+// functions that talk to the clock
 func get_status(address string) {
 	conn, err := net.Dial("udp", address)
 	defer conn.Close()
@@ -173,6 +190,72 @@ func send_command(address string, command string) {
 	}
 }
 
+func extract_time_part(time string, part int) uint8 {
+	time_components := strings.Split(time, ":")
+	// fmt.Println(time_components)
+
+	if len(time_components) > part {
+		intVar, err := strconv.Atoi(time_components[part])
+		if err != nil {
+			fmt.Printf("Atoi(%s) error %v\n", time_components[part], err)
+			panic("Atoi failed.")
+		}
+		return uint8(intVar)
+	} else {
+		return uint8(0)
+	}
+}
+
+func send_set_command(address string, command string, time string) {
+	set_struct := SetTimer{}
+	set_struct.Command = uint8(locator_commands["up_set_time"][0])
+
+	set_struct.Hour = extract_time_part(time, 0)
+	set_struct.Minute = extract_time_part(time, 1)
+	set_struct.Second = extract_time_part(time, 2)
+	set_struct.Tenths = extract_time_part(time, 3)
+	set_struct.Hundredths = extract_time_part(time, 4)
+
+	fmt.Println(set_struct)
+
+	conn, err := net.Dial("udp", address)
+	defer conn.Close()
+	if err != nil {
+		fmt.Printf("Dial error %v\n", err)
+		return
+	}
+
+	var send_buf bytes.Buffer // buffer for UDP send
+	err = binary.Write(&send_buf, binary.BigEndian, set_struct)
+	if err != nil {
+		panic(err)
+	}
+
+	len, err := conn.Write(send_buf.Bytes())
+	if err != nil {
+		panic(err)
+	}
+//	fmt.Fprintf(conn, send_buf)
+	fmt.Printf("sent command %s to %s (%i bytes)\n", command, address, len)
+
+	udp_resp := make([]byte, maxBufferSize) // buffer for UDP responses
+	packet_size, err := bufio.NewReader(conn).Read(udp_resp)
+	if err == nil {
+		if packet_size != 2 {
+			fmt.Printf("packet length %d\n", packet_size)
+			panic("unexpected packet size in UDP response")
+		}
+		if string(udp_resp[0]) != "A" {
+			fmt.Println("response hexdump:")
+			fmt.Printf("%s", hex.Dump(udp_resp))
+			panic("response does not look like an acknowldgement")
+		}
+		fmt.Println("acked by clock")
+	} else {
+		fmt.Printf("Some error %v\n", err)
+	}
+}
+
 func main() {
 	if len(os.Args) < 3 {
 		fmt.Println("expected arguments of subcommand and address")
@@ -200,6 +283,9 @@ func main() {
 		send_command(clock_addrport, "up_reset_ms")
 	case "up_reset_hms":
 		send_command(clock_addrport, "up_reset_hms")
+	case "up_set_time":
+		set_time := os.Args[3]
+		send_set_command(clock_addrport, "up_set_time", set_time) // but don't be upset :)
 	default:
 		panic("undefined subcommand")
 	}
