@@ -231,12 +231,12 @@ func send_set_command(address string, command string, time string) {
 		panic(err)
 	}
 
-	len, err := conn.Write(send_buf.Bytes())
+	length, err := conn.Write(send_buf.Bytes())
 	if err != nil {
 		panic(err)
 	}
 //	fmt.Fprintf(conn, send_buf)
-	fmt.Printf("sent command %s to %s (%i bytes)\n", command, address, len)
+	fmt.Printf("sent command %s to %s (%i bytes)\n", command, address, length)
 
 	udp_resp := make([]byte, maxBufferSize) // buffer for UDP responses
 	packet_size, err := bufio.NewReader(conn).Read(udp_resp)
