@@ -66,8 +66,7 @@ acked by clock
 * There is no timeout yet so you will need to hit <kbd>Ctrl</kbd>-<kbd>C</kbd> to exit if you put in an invalid host or IP.
 * Unimplemented:
     * downtimers - doable but not coded yet
-    * setting dotmatrix text - I don't have a device to test with
-    * setting timers while running - doable but not coded yet
+    * setting dotmatrix text - I don't have a device to test this with yet.
     * exec stored program (API2.0)
     * relay close (API2.0)
     * dimmer set (API2.0)
