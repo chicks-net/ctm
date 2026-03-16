@@ -45,5 +45,6 @@ Wire format structs (all use `encoding/binary` with big-endian):
 
 ## Known Gaps
 
-- No UDP timeout — invalid hosts require Ctrl-C to exit
+- No UDP timeout — invalid hosts require Ctrl-C to exit (tracked: [issue #2](https://github.com/chicks-net/ctm/issues/2))
 - API 2.0 features panic if encountered: downtimers, dotmatrix text, relay, dimmer, RGB color, exec stored program
+- Downtimer subcommands (`down_run`, `down_pause`, `down_set_time`) not yet implemented (tracked: [issue #3](https://github.com/chicks-net/ctm/issues/3))
