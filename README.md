@@ -1,6 +1,8 @@
 <!-- markdownlint-disable MD033 -->
 # ctm = Control Time Machines
 
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/chicks-net/ctm/badge)](https://scorecard.dev/viewer/?uri=github.com/chicks-net/ctm)
+
 Control Time Machines (`ctm`) lets you control clocks
 from [Time Machines Corp.](https://timemachinescorp.com).
 
