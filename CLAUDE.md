@@ -24,10 +24,16 @@ No external dependencies — standard library only.
 The root `justfile` imports recipe modules from `.just/`:
 `compliance.just`, `gh-process.just` (PR lifecycle), `pr-hook.just`,
 `shellcheck.just`, `cue-verify.just`, `claude.just`, `copilot.just`,
-`repo-toml.just`.  Run `just` or `just --list` to see all recipes.
+`repo-toml.just`, `template-sync.just` (template updates).  Run `just`
+or `just --list` to see all recipes.
 `.repo.toml` holds repo metadata (description/topics/license/feature flags),
 validated by `cue vet .repo.toml docs/repo-toml.cue` via `just cue-verify`.
 `.just/repo-toml.sh` is generated (gitignored) by `just repo_toml_generate`.
+
+The `.just/` modules track the FINI template-repo via `.just/CHECKSUMS.json`.
+`just checksums_verify` reports drift from template versions and
+`just update_from_template` safely pulls updates (locally modified files
+are skipped, never clobbered).
 
 ## Usage
 
