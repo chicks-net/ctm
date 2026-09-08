@@ -56,12 +56,12 @@ type Response20 struct {
 // Structures for API1.x and API2.x
 
 type SetTimer struct {
-	Command		uint8
-	Hour		uint8
-	Minute		uint8
-	Second		uint8
-	Tenths		uint8
-	Hundredths	uint8
+	Command    uint8
+	Hour       uint8
+	Minute     uint8
+	Second     uint8
+	Tenths     uint8
+	Hundredths uint8
 }
 
 const maxBufferSize = 48 // the biggest response packet is 40 bytes
@@ -98,7 +98,7 @@ func get_status(address string) {
 		fmt.Printf("Dial error %v\n", err)
 		return
 	}
-	fmt.Fprintf(conn, locator_commands["device_query"])
+	fmt.Fprint(conn, locator_commands["device_query"])
 	fmt.Printf("sent status query to %s\n", address)
 
 	udp_resp := make([]byte, maxBufferSize) // buffer for UDP responses
@@ -127,32 +127,9 @@ func get_status(address string) {
 		} else if packet_size == 40 {
 			// API version 2.0
 			fmt.Printf("packet length %d (API version 2.0)\n", packet_size)
-			struct_resp := Response20{}
 
 			fmt.Println("need a clock to test....")
 			panic("unimplemented API 2.0")
-
-			fmt.Printf("Type %x\n", struct_resp.DeviceType)
-			fmt.Printf("IP %v\n", struct_resp.ClientIP)
-			fmt.Printf("MAC %x\n", struct_resp.MAC_address)
-			fmt.Printf("Ver %x\n", struct_resp.FirmwareVer)
-			fmt.Printf("Syncs %d\n", struct_resp.NTPSyncCnt)
-			fmt.Printf("Time %d\n", struct_resp.DisplayTime)
-			fmt.Printf("Name %s\n", struct_resp.DeviceName)
-
-			fmt.Printf("Mode %x\n", struct_resp.DisplayMode)
-			if (struct_resp.DisplayMode & 0x40) == 0x40 {
-				fmt.Println("\trunning")
-			} else {
-				fmt.Println("\tstopped")
-			}
-			if (struct_resp.DisplayMode & 0x80) == 0x80 {
-				fmt.Println("\tdisplay M:S:Tenths")
-			} else {
-				fmt.Println("\tdisplay H:M:S")
-			}
-			fmt.Printf("Down %x\n", struct_resp.Downtimer)
-			fmt.Printf("Wifi %x\n", struct_resp.WifiSignal)
 		} else {
 			fmt.Printf("packet length %d\n", packet_size)
 			panic("unexpected number of bytes returned so we don't know which protocol it is talking")
@@ -169,7 +146,7 @@ func send_command(address string, command string) {
 		fmt.Printf("Dial error %v\n", err)
 		return
 	}
-	fmt.Fprintf(conn, locator_commands[command])
+	fmt.Fprint(conn, locator_commands[command])
 	fmt.Printf("sent command %s to %s\n", command, address)
 
 	udp_resp := make([]byte, maxBufferSize) // buffer for UDP responses
@@ -235,8 +212,8 @@ func send_set_command(address string, command string, time string) {
 	if err != nil {
 		panic(err)
 	}
-//	fmt.Fprintf(conn, send_buf)
-	fmt.Printf("sent command %s to %s (%i bytes)\n", command, address, length)
+	//	fmt.Fprintf(conn, send_buf)
+	fmt.Printf("sent command %s to %s (%d bytes)\n", command, address, length)
 
 	udp_resp := make([]byte, maxBufferSize) // buffer for UDP responses
 	packet_size, err := bufio.NewReader(conn).Read(udp_resp)

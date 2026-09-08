@@ -11,10 +11,11 @@ and v2.0 (40-byte responses, currently unimplemented beyond detection).
 ## Build and Run
 
 ```sh
-make          # builds ./ctm binary
-go fmt main.go  # format code
+make          # builds ./ctm binary via `go build -o ctm .`
+go fmt .      # format code
 ```
 
+Module path is `github.com/chicks-net/ctm`, pinned to Go 1.25 (`go.mod`).
 No external dependencies — standard library only.
 
 ## Usage
