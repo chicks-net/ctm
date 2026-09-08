@@ -2,6 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(gh issue:*)"
-    ]
+    ],
+    "deny": [],
+    "ask": []
   }
 }

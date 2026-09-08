@@ -1,0 +1,17 @@
+# .repo.toml
+
+[about]
+description = "Control Time Machines - control timemachinescorp.com clocks"
+topics = ["cli", "go", "golang", "network-clocks", "time", "udp"]
+license = "GPL-2.0-only"
+
+[urls]
+git_ssh = "git@github.com:chicks-net/ctm.git"
+web_url = "https://github.com/chicks-net/ctm"
+
+[flags]
+claude = true
+claude-review = true
+copilot-review = false
+standard-release = true
+asciinema-record = false
