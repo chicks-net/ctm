@@ -1,0 +1,1312 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-09-05T18:24:30Z",
+  "template_repo": "https://github.com/fini-net/template-repo",
+  "files": {
+    ".just/claude.just": {"versions": [
+        {
+          "checksum": "0592cb365261c97ce3016b7b44051b75384b886a1d2ece0e50d5b3925d7998cd",
+          "commit": "7287b8bc3e88e3e24286df3082986195ad677f43",
+          "date": "2026-06-26T22:59:34-07:00",
+          "version": "",
+          "is_latest": true
+        }
+,
+        {
+          "checksum": "9a1fa8eef2db72259e56c809d128bd65d7630bfd16d8c1be9039715decc6b435",
+          "commit": "8f68822dd12b30f44aa82adba2c5a18fe54251a5",
+          "date": "2026-04-23T10:48:38-07:00",
+          "version": "v6.0",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "c792bfe1dd3c22034617a767311ce3c150940e76c17c68977f8bf821d289be64",
+          "commit": "7cbea684926ae42eb667dc2e9e5d059cfc3074b1",
+          "date": "2026-01-24T20:16:01-08:00",
+          "version": "",
+          "is_latest": false
+        }
+]},
+    ".just/clean-template.just": {"versions": [
+        {
+          "checksum": "d8cc263463dcfbaaa34b14f10d5ac09c4c54f1f9d6d512894df72e4da50f1633",
+          "commit": "7287b8bc3e88e3e24286df3082986195ad677f43",
+          "date": "2026-06-26T22:59:34-07:00",
+          "version": "",
+          "is_latest": true
+        }
+,
+        {
+          "checksum": "c71ced18c9359ba3055e5a2612a1859d469a292fe863d5751de824864a2be104",
+          "commit": "944a5866bf8c439c0b39b9ec3a3c436c8d8e2e7b",
+          "date": "2026-06-26T14:32:43-07:00",
+          "version": "v7.2",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "924aa3d60529da2365f293a03b98470b5e3c5c69645fb484ee48a5a5e4caae61",
+          "commit": "73d9e57268ef1bdf2662ea7c5437f455128c1d1d",
+          "date": "2026-03-22T20:52:08-07:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "294b996df8dcc9d6f4fd3693c86a6eac7a500c974a3ef5e11b2ed5fc95866877",
+          "commit": "055f5e99a5974ed69b01d2daeae27552e127d368",
+          "date": "2026-03-21T11:23:13-07:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "ed3d09bac058c0e0271a78ed1942d637a48afbe85ce97cd914000d69a796d938",
+          "commit": "85837f9072986ae6d0159e1e4840eac24dff9e3a",
+          "date": "2026-01-28T19:18:00-08:00",
+          "version": "",
+          "is_latest": false
+        }
+]},
+    ".just/compliance.just": {"versions": [
+        {
+          "checksum": "e25d5223f638db7833db516b57a53fe440410ae8646729df49852df8422dd704",
+          "commit": "33ca5a03d7c35dc94086c21de343c7400e7896a8",
+          "date": "2026-09-01T13:56:18-07:00",
+          "version": "v8.6",
+          "is_latest": true
+        }
+,
+        {
+          "checksum": "eee991fabf5be3163034945440eb805a60f6e44a9b54b54dd9b57131efd0b829",
+          "commit": "69fc6fedc2e11c2c95596f9609a2e8ea5531ab84",
+          "date": "2026-08-28T16:50:25-07:00",
+          "version": "v8.5",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "242aade552dc4490f224887c6462272f382fca3ed9d8d5571abbb08cd9bf7937",
+          "commit": "a870c52ef980d203028cdfda3e2697ce92b1543c",
+          "date": "2026-01-27T22:00:40-08:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "7e86128209425016b8e24db976de2803d8360706147fa136208913aec8ec134a",
+          "commit": "df745cb646b2c0b9c72866e413b9710304eba9bf",
+          "date": "2026-01-25T07:51:38-08:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "9e99ad34184fc89871610cd5dcba13bd45bfb59eb0694358d643873fcb5f2aa0",
+          "commit": "f65e4f804fe10bfac50b42d2303ae47b4eb7d320",
+          "date": "2025-11-16T11:57:02-05:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "b98aaa258666c2eead0421c4e32839202841837e46c218faa63d87e13d5200fc",
+          "commit": "fd45848bb31fcc39d87cff1749f5c6cdedaa7225",
+          "date": "2025-08-01T08:05:21-07:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "6d779399b397deed85ba7f26a6277676957e9a05a4230f0ff30bd397a85ed274",
+          "commit": "f0038d9ee5b29b14a07750807372f6c1009cd3ca",
+          "date": "2025-06-19T11:17:50-04:00",
+          "version": "",
+          "is_latest": false
+        }
+]},
+    ".just/copilot.just": {"versions": [
+        {
+          "checksum": "0c5544dba31f871763f2f86e6089d2167a7f863bbe16c2726413e1181cb5527d",
+          "commit": "cbac63e4e05250d45b7a3f9bfc1ef48619ac4067",
+          "date": "2026-09-05T10:57:29-07:00",
+          "version": "v8.9",
+          "is_latest": true
+        }
+,
+        {
+          "checksum": "5653493e9f791ccbeb2713bab98bf46c9a5bad9655332888bd33bb84f4a9aa98",
+          "commit": "f3d478e98ddc9d5bbd533464eaae8061c35ad1fb",
+          "date": "2026-09-04T21:58:27-07:00",
+          "version": "v8.8",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "c7c63160b51387b044ce5139bb52cd5bda3573f49071707dbabdceab3e1cfcc5",
+          "commit": "54418b66b70b98329631e981517344b02cb3d75f",
+          "date": "2026-08-14T17:35:59-07:00",
+          "version": "v8.4",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "75358c6bdb0819bdc94e3699f26afe1a204da7f4eef1c9e32360127a332d1fa8",
+          "commit": "093eecd722784f09b759393a48adc0b9d90b2ffe",
+          "date": "2026-08-04T14:45:06-07:00",
+          "version": "v8.3",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "6e60f3eaa4aebd0a66fbfe219393600e56ef1883c619dbec7572f59970cbc492",
+          "commit": "43a6fc02f60437e74775712d3b0d4e0c749ccedd",
+          "date": "2026-06-28T19:55:33-07:00",
+          "version": "v7.9",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "e166d5e76a043895529a9305ba4b9b2bb23f3b78f73bd6da790fa172d1f3ca31",
+          "commit": "b2035a68578444a7a772ea1052d75e344b11007f",
+          "date": "2026-05-22T21:52:28-07:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "91eb7eaaf47705a2cce883eb747f3d1a2b47d3d76b941646e2605464f8db853d",
+          "commit": "30aee89c82f35514ba7ee0189b89530bf7a7423f",
+          "date": "2026-04-23T17:29:04-07:00",
+          "version": "v6.3",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "938d9dc05a91482b2f99f6a6ad2bf56b74570a8c87486a955755dfed3db5c312",
+          "commit": "210384cba95c470d0a8fb9bee2d849d69112df68",
+          "date": "2026-01-28T16:59:51-08:00",
+          "version": "v5.4",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "afbe3c0a042600dbcd246ce8f659d5a57e4a0ccb096988a37ea6ec2958f2c5ba",
+          "commit": "a870c52ef980d203028cdfda3e2697ce92b1543c",
+          "date": "2026-01-27T22:00:40-08:00",
+          "version": "",
+          "is_latest": false
+        }
+]},
+    ".just/cue-verify.just": {"versions": [
+        {
+          "checksum": "dc1c6cd75d74122c4b0ca76687806663b89ed623ba6bc78781d2f7f35fd46b85",
+          "commit": "3acdc3d94ee2e22726dded65217785b9e972290a",
+          "date": "2026-09-05T11:24:29-07:00",
+          "version": "v9.0",
+          "is_latest": true
+        }
+,
+        {
+          "checksum": "647c1a5e32d206a08ca0f2366e164e4beb85ebb67f5a25920869015f1560b9f5",
+          "commit": "b43cda4cc87f9f63c9f73cdfb9a07d79f8e0b994",
+          "date": "2026-06-29T11:59:13-07:00",
+          "version": "v8.1",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "dbfeb1651f804e079e81a8aaa66df6571fee49f682eff095e13d3ae94e1199b5",
+          "commit": "ce09d6fede10d6423e875e943d6a4f8220f9dd66",
+          "date": "2026-06-29T10:40:02-07:00",
+          "version": "v8.0",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "e6a849dffe303feb53ca8258b0f3eb1abb11a767e91da5f25b99b3940aaabc24",
+          "commit": "d983643223de5ce240010f360fa8d824354b68cf",
+          "date": "2026-06-28T14:14:02-07:00",
+          "version": "v7.7",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "553f938f4f904a16d7b9f8a87e872001f0306bb9c2344d2c30c43d8297fb3af1",
+          "commit": "d499305e2691f2601113a45003cf2dbf695f019d",
+          "date": "2026-06-23T21:50:26-07:00",
+          "version": "v6.9",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "2057ae4b60857345c597c6dde94b95bf9329ebf913d7371e6af97b87c18d3e31",
+          "commit": "3f47e491badf641230f619c9d903b9b9740910eb",
+          "date": "2026-03-29T20:32:09-07:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "2dff8d6020a994b7a85b75e453b04b3a62deda7d3093affbc888c1b60484ab73",
+          "commit": "a870c52ef980d203028cdfda3e2697ce92b1543c",
+          "date": "2026-01-27T22:00:40-08:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "ff70cfea6f3452073d0ae7b012ee02a5bfc3d3971cf17aed5f19f2f9629e8633",
+          "commit": "a4598ad4662e930b77efa462ffe2d4e6298d3f6c",
+          "date": "2026-01-27T19:11:38-08:00",
+          "version": "v5.3",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "6a58f3956045de4d4ca304ad7851f3a8f1a47d7d3d308eb5fed5eeab09e286ea",
+          "commit": "73502a937e447552ac45edcb70f10c0fa853612f",
+          "date": "2026-01-24T17:16:44-08:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "7e907c5479cc198858d511d2ad27473b2cf542b9267d61fae1583f45c34fcff8",
+          "commit": "ba7dad2b6f92227f1703e510410de69270e86104",
+          "date": "2026-01-13T19:29:15-08:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "9cdc29ec27ac1830a3624ddd8eb4e928668fd3f111964008bc73cfc3a1f10ecc",
+          "commit": "7610e353118a7aad8340ccf6968aa98210e75b26",
+          "date": "2026-01-13T15:48:29-08:00",
+          "version": "",
+          "is_latest": false
+        }
+]},
+    ".just/gh-process.just": {"versions": [
+        {
+          "checksum": "81d9611439fc7ae12236534febb295d4a1ac4b48e3cf02fa196ea2fa1600592e",
+          "commit": "3acdc3d94ee2e22726dded65217785b9e972290a",
+          "date": "2026-09-05T11:24:29-07:00",
+          "version": "v9.0",
+          "is_latest": true
+        }
+,
+        {
+          "checksum": "518c5cca877ad3570b59329387c781dd07146930bc74da1e65440b623d80fa3f",
+          "commit": "cbac63e4e05250d45b7a3f9bfc1ef48619ac4067",
+          "date": "2026-09-05T10:57:29-07:00",
+          "version": "v8.9",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "c83fabb4e4183bb45ed3a6b652f4e4c9344c247e285f9704c817ce351f81ddd1",
+          "commit": "f3d478e98ddc9d5bbd533464eaae8061c35ad1fb",
+          "date": "2026-09-04T21:58:27-07:00",
+          "version": "v8.8",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "89b42a3a1e309a42ec7dbf36e953c5d9290876f0695793b602c57740cf223232",
+          "commit": "eff4c31fade8d8fcf1e0e701e02b4ab25231a95e",
+          "date": "2026-09-01T14:44:27-07:00",
+          "version": "v8.7",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "5037a97ebfbf35f14ae3b1f47b1aee3e71f4bbdbe935d730d94b7cf9d733dcc4",
+          "commit": "33ca5a03d7c35dc94086c21de343c7400e7896a8",
+          "date": "2026-09-01T13:56:18-07:00",
+          "version": "v8.6",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "f21c2f271f5190bb9cc7940605fc792b9f6568542ce03b7e0e385437bd5c52fa",
+          "commit": "69fc6fedc2e11c2c95596f9609a2e8ea5531ab84",
+          "date": "2026-08-28T16:50:25-07:00",
+          "version": "v8.5",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "20a8854b5b8595878867f15e65f5dc5c179012b391e5d96772fcf52b0910b0ad",
+          "commit": "54418b66b70b98329631e981517344b02cb3d75f",
+          "date": "2026-08-14T17:35:59-07:00",
+          "version": "v8.4",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "d23f1ebc6b2d9cf6849c4e37d11d94fce485d9bceaf77274d76b6fa05f5f22df",
+          "commit": "093eecd722784f09b759393a48adc0b9d90b2ffe",
+          "date": "2026-08-04T14:45:06-07:00",
+          "version": "v8.3",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "0de02888abc8ff3eb35d4f398477352c4682be892520dc8c35472636a26b4a05",
+          "commit": "e49cb304b44f91618f2926a5a1c2817906ad6454",
+          "date": "2026-06-29T13:19:42-07:00",
+          "version": "v8.2",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "38ef8c4b50e47506464564c440cc914c6eb6f42b4a9e8714bf3b4496fdb714ad",
+          "commit": "b43cda4cc87f9f63c9f73cdfb9a07d79f8e0b994",
+          "date": "2026-06-29T11:59:13-07:00",
+          "version": "v8.1",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "9274ee10ffc74ac3b3b343b436318a040c0fb69d193d2ef0b441780b77e8c374",
+          "commit": "ce09d6fede10d6423e875e943d6a4f8220f9dd66",
+          "date": "2026-06-29T10:40:02-07:00",
+          "version": "v8.0",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "d88004299ad01090ccbcdf74c811e322d786b7da28c76fc9bc71d4cdb0d4bdb0",
+          "commit": "43a6fc02f60437e74775712d3b0d4e0c749ccedd",
+          "date": "2026-06-28T19:55:33-07:00",
+          "version": "v7.9",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "984150959f84ef6579fbc0a284e0f28c6de98584d4155ddff3110f20728593d6",
+          "commit": "83ddd56775adae1e46ca3f993f4993879e67510a",
+          "date": "2026-06-28T16:58:09-07:00",
+          "version": "v7.8",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "f9e6d7973210712250d6fbbca2bf3e0f35dc3669f0dc85b42deed9a63920f632",
+          "commit": "d983643223de5ce240010f360fa8d824354b68cf",
+          "date": "2026-06-28T14:14:02-07:00",
+          "version": "v7.7",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "a4ebd70e88fa7d96cf5d17c180f16918b898e63d097ec36f85ae69a25decf478",
+          "commit": "f2299dbedabf38f57521a29198e6916682c0ddf2",
+          "date": "2026-06-28T10:34:20-07:00",
+          "version": "v7.6",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "38639dfbc41f3e332a9e33a5bb4535df24b7aa95612e5a03ec3e16369a022e9c",
+          "commit": "94e6a2a58c9a01e862f3988f57b4bd0664ecf7fd",
+          "date": "2026-06-28T09:14:11-07:00",
+          "version": "v7.5",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "ae7e7923774a7e315e16e6fbe0fda2bafc57fd2e4d0d5cf9b6e3ad25376d7737",
+          "commit": "d994fc44cd06aa5cff04a1266e7b5aae1e78042c",
+          "date": "2026-06-26T16:50:18-07:00",
+          "version": "v7.4",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "624c1b9384422f801c91bc7cd693192cb46bfd55329bc18502f7f5958917787f",
+          "commit": "1e30f0fba31d226405d8db91fb60e0d57eb88c1a",
+          "date": "2026-06-26T15:08:57-07:00",
+          "version": "v7.3",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "1eb0af09316156292d399f18bfc6a86b0ef67a08ca35739d856c1451c5677bb0",
+          "commit": "944a5866bf8c439c0b39b9ec3a3c436c8d8e2e7b",
+          "date": "2026-06-26T14:32:43-07:00",
+          "version": "v7.2",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "0400226362a8e834a28c92bcc46b9eafd4ffb2034a800ee250e1459e8f9b06de",
+          "commit": "568c76cfe3f47d4c9e8f35bc5ff7d9d58dc8f2ac",
+          "date": "2026-06-25T17:24:21-07:00",
+          "version": "v7.1",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "a6b69f79a5a9b9713c29ade4f27ebacc0b294c049a90b28ed84f226ad22dc0d5",
+          "commit": "e9a87ba97c22f95538e3b6d75a4d59457f6a800a",
+          "date": "2026-06-24T10:17:54-07:00",
+          "version": "v7.0",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "e5a2c7264b94da22189f3abab5bf5d8d9a3d26e6710a8956ef57a61d292c9be8",
+          "commit": "d499305e2691f2601113a45003cf2dbf695f019d",
+          "date": "2026-06-23T21:50:26-07:00",
+          "version": "v6.9",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "a27b4491f1732048f3d3fc104837d87cf2cfe87beae4103a37cd96d7c2f47e16",
+          "commit": "7d8235c16304d2d250fe54ae32ec2ac63f687468",
+          "date": "2026-06-23T20:03:11-07:00",
+          "version": "v6.8",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "93f084b0258c2eb83d5f8108e2c77b369349f1f40e0af4fe0bb4460966fbfd42",
+          "commit": "59271f4fede60350d8a141729fd92fe798ab710a",
+          "date": "2026-06-20T14:53:57-04:00",
+          "version": "v6.7",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "1ad88b1431d1527cedf1572219c059e2ab08ed1f0134512f416f59b3e31d31a0",
+          "commit": "b2035a68578444a7a772ea1052d75e344b11007f",
+          "date": "2026-05-22T21:52:28-07:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "d36b7863842e4b2a6587e959afaf3d55e1e7856b451e16fb4a5573a058cde74f",
+          "commit": "bf35bf743fb040da4a6f8f0d8be9ce499c564d76",
+          "date": "2026-05-01T19:34:47-07:00",
+          "version": "v6.5",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "e181b0a99ff2a310ee800377a0bdbb764e4fa65a60578d9a0ab8b3a412f4748e",
+          "commit": "f1ad2cba35c333913447b02e3e9d87f7424b1c8a",
+          "date": "2026-04-23T17:58:55-07:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "a50a1544b0b87de77e643ac4e5065078b35d3060cb9c9cc541e0f149eebb9d26",
+          "commit": "30aee89c82f35514ba7ee0189b89530bf7a7423f",
+          "date": "2026-04-23T17:29:04-07:00",
+          "version": "v6.3",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "d870a87180c6569fd832f3788efd6686c703c4c847da509dc993cb000662c0ac",
+          "commit": "b2829dce75d11019decf0a1ad3af36c8fbe70bc2",
+          "date": "2026-04-23T16:28:02-07:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "505f550b2855afb6364dc11e4716fce0839e9265a78f3c01ccf8985937daf9b4",
+          "commit": "eb298fa0258c406fbfdd3b1ab3b4d18f6e8efdad",
+          "date": "2026-04-23T13:36:50-07:00",
+          "version": "v6.1",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "a3212fdf74cb0c5719e819944c45a75929221056d40f20151fe7c3c8a1bbbc4d",
+          "commit": "8f68822dd12b30f44aa82adba2c5a18fe54251a5",
+          "date": "2026-04-23T10:48:38-07:00",
+          "version": "v6.0",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "478383a2ef0c73ce1d5b6b8686bfdd1640458b6777f19f666ec51b490d546bbe",
+          "commit": "b853d0eeecf7ce83e501c9e2ba129547577bf186",
+          "date": "2026-04-19T10:29:45-07:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "e12c5b3daa4f524856e6f82168c416ab0b7bef1b21117d12b274a542e2e99251",
+          "commit": "c25f8d5f0d1dfef88f9ab988c2aec9bb6712c8d3",
+          "date": "2026-03-21T12:36:04-07:00",
+          "version": "v5.8",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "bc26327138a6d3e469ddbbd911e523b1696056ce597bbc3e5628a0be7a3146b0",
+          "commit": "d74495db1881cec35a2c1d1012b91c97390ee945",
+          "date": "2026-02-16T05:03:25-08:00",
+          "version": "v5.7",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "c562d5095d6b2bdd4eba6d2c72d0a10fe8f3473a9fcb61ed66b766418807112a",
+          "commit": "c50444cf36a04190c1df93d1c4884ac0e7c8b9e3",
+          "date": "2026-01-29T21:12:43-08:00",
+          "version": "v5.5",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "635596f59ee0a19acbcb545b95696e96862ee744ab22082d99e14f6462ade1f7",
+          "commit": "210384cba95c470d0a8fb9bee2d849d69112df68",
+          "date": "2026-01-28T16:59:51-08:00",
+          "version": "v5.4",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "05cec5863c4b71b23ca1807a18bd685967368a828b29285f0d63566c244537fb",
+          "commit": "a870c52ef980d203028cdfda3e2697ce92b1543c",
+          "date": "2026-01-27T22:00:40-08:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "6edcacef030e3d6a6cb896dcb59b83bad445840ff6eb7656891ef31a19223438",
+          "commit": "a4598ad4662e930b77efa462ffe2d4e6298d3f6c",
+          "date": "2026-01-27T19:11:38-08:00",
+          "version": "v5.3",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "630d7155f0189dba3e017c828193630b0619c721d0a379bf8780c619e3f4eb5a",
+          "commit": "2f946c9e168a2a72f052124608d0b402d56106e5",
+          "date": "2026-01-27T17:59:16-08:00",
+          "version": "v5.2",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "33a453ecd44649b89d4e7f8dd291fd6f0c5cc3f6247f5ab6d95a34b2d749c924",
+          "commit": "388fc10a1dde8c657a406ec2dc539e26c54977af",
+          "date": "2026-01-27T08:16:19-08:00",
+          "version": "v5.1",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "2bc5ed3ed63109df5da681b9c41e125ca33cfe764e17224f3e20ccfa0cf2e11f",
+          "commit": "25acc859d3836346cf47bef3f29442cfc26dcf37",
+          "date": "2026-01-26T18:47:31-08:00",
+          "version": "v5.0",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "cb81ebc638e722ba7e696888e839b53ac362d37bcd07dd3d0ac65bf4ee5a5a1a",
+          "commit": "e4093ef123cbe83c0b666fd88fa02f7bad1be077",
+          "date": "2026-01-26T12:23:23-08:00",
+          "version": "v4.9",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "8dd0a9af389bc9a50def1065545fb0df9de4409986f88d1611087f1f3a6876ae",
+          "commit": "9c86f3a8ffdfa68314fe1fe5d2cd948e8cbf406a",
+          "date": "2026-01-26T08:39:27-08:00",
+          "version": "v4.8",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "646fad69bc680d79a7ec2044adc917c4a446d68969d106e54882eaf25d65d3c6",
+          "commit": "273b9931cb6f3ba1081caef39a22af88191680d0",
+          "date": "2026-01-25T20:50:40-08:00",
+          "version": "v4.7",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "bb6c22559e08564b2a2d817a35515f2fdab24f5b816c0b100c0c61113659f339",
+          "commit": "bb25b5823534946d9d3c207df98ced7edbdc954b",
+          "date": "2026-01-25T07:33:19-08:00",
+          "version": "v4.6",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "604dedf151c0d4a4dc889edd3a194c2de02792c6771a1775e89e8d88cf2b5793",
+          "commit": "b9dd2ad8eb3e352d5a0d41de68b26d6b3f4e6ad0",
+          "date": "2026-01-24T21:34:27-08:00",
+          "version": "v4.5",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "dfa85f7917befd78331b7f8fb7abd72b745e1bab37651d07001766952e802fb1",
+          "commit": "1060655f68fabcedc16ab47e995f956502570cad",
+          "date": "2025-12-10T18:23:45-08:00",
+          "version": "v4.4",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "33edb9a64dcaabe949839219b4836366b43eea61e133c438d3a88142d3cde787",
+          "commit": "cd55342872282362d8c28281275d00f2647bddd4",
+          "date": "2025-12-10T17:39:29-08:00",
+          "version": "v4.3",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "97a4761d80b20a9a0b35756f3a4df6490470cbc9555fdbdd41bf3b184dec9064",
+          "commit": "5a43703745c4f04a408f47de6a5871aac1a0f8fe",
+          "date": "2025-12-10T17:22:38-08:00",
+          "version": "v4.2",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "ad33b0598debc96ef2f747d0b283e6da22756e7b9ed0f19addb39ad89102c31c",
+          "commit": "4ae8e221dad87336a1ab4d5aeab0d48ff450efc8",
+          "date": "2025-12-07T17:29:39-08:00",
+          "version": "v4.1",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "82a9e6004f015868fec67272c0431da6f8375a7430ac0e61b518ee0c4d5541b1",
+          "commit": "e6e7d52d5ecc7e945a4d256bc59517188a41841b",
+          "date": "2025-11-28T07:55:12-08:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "42d878577ee4dc9d29c6c861ec70d2285e65d5ad72d1df70d2b605747c87cca5",
+          "commit": "08b7b0c67b769181f67e4a8edc3715f53d0c34b1",
+          "date": "2025-11-27T07:10:37-08:00",
+          "version": "v4.0",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "1dd7d0781c37249160eeedf9c485e817e0b57a45bc7d259a29645455f3be8537",
+          "commit": "cda843320ee033a9e27779c16bfceb7f853da0b0",
+          "date": "2025-11-17T07:58:40-05:00",
+          "version": "v3.9",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "35550028ddd51ae9f7033b5950606561dcd027d944e271666177996d0dae4e66",
+          "commit": "ac064d54b800985b1b52012436a8dd40922c87e9",
+          "date": "2025-11-15T08:13:57-05:00",
+          "version": "v3.8",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "9346b78d0b490f420d5206f9b3e2f079cd1d4a8f0f3fae2e6c7d91f085511c3c",
+          "commit": "ca93b2c6f1a5ddbd05a9dd8248f972a9e4d3aca1",
+          "date": "2025-11-14T05:58:15-05:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "5b64c74aa53e92f1774bf48fd7415431ef93a2f0aab32d20379b45b0aaf9e398",
+          "commit": "9ec0a30cde3e95c801e2adabe0b34eb8e6e83f82",
+          "date": "2025-11-11T08:10:59-05:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "53b9493f051c7ca1221e206282fbee8e1f8540ee581afaea9b037a4520bd0114",
+          "commit": "5875f6a8e561c145ceedc7b27bb1a31da5651652",
+          "date": "2025-11-10T21:51:43-05:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "2bb554940484feaeed7a83035d441a2333aec2df45452340781caec5538ab152",
+          "commit": "4dfa9fc4a60b0c0e1e7020d509eb3da895caf2eb",
+          "date": "2025-11-10T21:08:31-05:00",
+          "version": "v3.5",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "e155dc47f99d1c2ffb9493abc61424660fb2033aa7fee5a885ab7dae630db71f",
+          "commit": "917248c9986a986d1096e2ced53554a9f2b2046d",
+          "date": "2025-11-10T20:54:45-05:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "5e2e3d9e7b89c081349b61ea6b4139cb888ea88a2af9372ce5464e900fae96c1",
+          "commit": "959ed354f0cd2fe371f646a63871719fab69f2de",
+          "date": "2025-10-18T14:44:50-07:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "19041c0aea93a88d9f72a746b3c740a6198c73786dcfecfda13e7dff1e846ae3",
+          "commit": "1753035a22b2de7fb51098633afa2db71beec9b8",
+          "date": "2025-10-18T12:20:57-07:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "fff7d0f4cca72ce2ad6246cdf508bd253c84a7529beaadec76a0d05c2ba8a8d3",
+          "commit": "676163d0fe82bf40b3a4a083133886a488d11c5f",
+          "date": "2025-08-28T15:05:21-07:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "310346dc762b0a239cc68781e4c84507341a1456b3b30ac5a30a39f8b575d4b5",
+          "commit": "1b2bacea7248cf2bb538009fce6c9b4476b7baf6",
+          "date": "2025-08-19T17:14:49-07:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "f28e1e26da86f2199e80a74802883142cbdd6927057c621ea348cdc194fd598a",
+          "commit": "f0038d9ee5b29b14a07750807372f6c1009cd3ca",
+          "date": "2025-06-19T11:17:50-04:00",
+          "version": "",
+          "is_latest": false
+        }
+]},
+    ".just/pr-hook.just": {"versions": [
+        {
+          "checksum": "ae9a52b72583cce718d42f1ce0cf9c34c862777a9ef7a48a0e9aaf4f919af7ef",
+          "commit": "6e469476ac980e0c2227f10e725479e494b2d42f",
+          "date": "2026-01-25T22:58:07-08:00",
+          "version": "",
+          "is_latest": true
+        }
+,
+        {
+          "checksum": "fac25f4317e310c6bb18b885cfe812672e8f16a9eb1820fbf382ebb40b4c7421",
+          "commit": "9ec0a30cde3e95c801e2adabe0b34eb8e6e83f82",
+          "date": "2025-11-11T08:10:59-05:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "2b954b307182c28463ff2b84f7b0d8e4f01d6c3fa81fddcdc298e47d80eed637",
+          "commit": "5875f6a8e561c145ceedc7b27bb1a31da5651652",
+          "date": "2025-11-10T21:51:43-05:00",
+          "version": "",
+          "is_latest": false
+        }
+]},
+    ".just/repo-toml.just": {"versions": [
+        {
+          "checksum": "2e03f6ed95fe729c17ee5eda0850b5e1a9cbe8d75822089adf7bca4dc82bfda4",
+          "commit": "3acdc3d94ee2e22726dded65217785b9e972290a",
+          "date": "2026-09-05T11:24:29-07:00",
+          "version": "v9.0",
+          "is_latest": true
+        }
+,
+        {
+          "checksum": "6060399855846b961da5e6550bfa0c9740afaf7962eb97530588e826af9a3091",
+          "commit": "83ddd56775adae1e46ca3f993f4993879e67510a",
+          "date": "2026-06-28T16:58:09-07:00",
+          "version": "v7.8",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "58fa8830111fd65a8c8e25409b57395c1df76109365115d3895c2db7e1100bfa",
+          "commit": "eb298fa0258c406fbfdd3b1ab3b4d18f6e8efdad",
+          "date": "2026-04-23T13:36:50-07:00",
+          "version": "v6.1",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "f6a806c4982e46b73827247b48efdf56fd16ecb1e95f048ad077dad99ffb4519",
+          "commit": "a870c52ef980d203028cdfda3e2697ce92b1543c",
+          "date": "2026-01-27T22:00:40-08:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "d74e439ae07a2d7a1de3191b2eee2760d4d6459c8c9081a43b39557591c07e48",
+          "commit": "a4598ad4662e930b77efa462ffe2d4e6298d3f6c",
+          "date": "2026-01-27T19:11:38-08:00",
+          "version": "v5.3",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "6f5283cbb3a63909205744bead736dad83527fd95b40c030006957ef2a183072",
+          "commit": "bb25b5823534946d9d3c207df98ced7edbdc954b",
+          "date": "2026-01-25T07:33:19-08:00",
+          "version": "v4.6",
+          "is_latest": false
+        }
+]},
+    ".just/shellcheck.just": {"versions": [
+        {
+          "checksum": "8a2dbe2e5d67dcca5f4b87503f00013e3469c5115798e1150bcca32d0c59cb80",
+          "commit": "1e30f0fba31d226405d8db91fb60e0d57eb88c1a",
+          "date": "2026-06-26T15:08:57-07:00",
+          "version": "v7.3",
+          "is_latest": true
+        }
+,
+        {
+          "checksum": "7d2f60572976240c157c0442a398f6a1afa17755ec58613a83a5e7c5bd56cce9",
+          "commit": "a870c52ef980d203028cdfda3e2697ce92b1543c",
+          "date": "2026-01-27T22:00:40-08:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "cde313d099f194a1f36da2c9d5a161410d01eb3f8a7e514da0daa41daa08d7ba",
+          "commit": "728e0422984f1812f413b1ab7c77b94b2733d01c",
+          "date": "2025-11-17T07:52:40-05:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "54dd4afd32e4f9a009cbe58e3e533aa6015c1beb8a29266a4363e153f12c9809",
+          "commit": "f65e4f804fe10bfac50b42d2303ae47b4eb7d320",
+          "date": "2025-11-16T11:57:02-05:00",
+          "version": "",
+          "is_latest": false
+        }
+]},
+    ".just/template-sync.just": {"versions": [
+        {
+          "checksum": "aee2862c95da925e5e874f07dcd4f56e4c6128afbfa8804ef88440ac62b19cbe",
+          "commit": "d994fc44cd06aa5cff04a1266e7b5aae1e78042c",
+          "date": "2026-06-26T16:50:18-07:00",
+          "version": "v7.4",
+          "is_latest": true
+        }
+,
+        {
+          "checksum": "b61843432a55e6868f3f532694f96e75c360a22eda6d31f8ba7ced3d5d1dc7a8",
+          "commit": "b2829dce75d11019decf0a1ad3af36c8fbe70bc2",
+          "date": "2026-04-23T16:28:02-07:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "d3757c40d03a655b13a629301a39add3d63b93aa9b5850731255ad85ad4174be",
+          "commit": "73d9e57268ef1bdf2662ea7c5437f455128c1d1d",
+          "date": "2026-03-22T20:52:08-07:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "723242e1cd5ce0d41014696e871ef29c9c041977e0dacd0dc57f213831f1640d",
+          "commit": "fcc50c81f879c1fae2f133e3febc0b6d4018d551",
+          "date": "2026-02-06T19:31:51-08:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "a7ffe7c91f390fcaaaffce4b0b57ab5ce1f79998f82d3a60344022f761c958ef",
+          "commit": "6dd0fa22488df81b587b152eb4ee2b30951d6515",
+          "date": "2026-01-29T20:10:22-08:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "9bc5b32ae81bedd3925861e2cbae7559eaa499a3921900d7a127d61bc252aa5f",
+          "commit": "a870c52ef980d203028cdfda3e2697ce92b1543c",
+          "date": "2026-01-27T22:00:40-08:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "6d6a3d3f9b1bafd04b3b8b2bb8412da419b0eadb7069a0c84a69cf8463ed8066",
+          "commit": "2f946c9e168a2a72f052124608d0b402d56106e5",
+          "date": "2026-01-27T17:59:16-08:00",
+          "version": "v5.2",
+          "is_latest": false
+        }
+]},
+    ".just/testing.just": {"versions": [
+        {
+          "checksum": "edce3d39140b737e024c72c1fc69d3002994eb1eec42a6ec22ea40a8468744ed",
+          "commit": "d499305e2691f2601113a45003cf2dbf695f019d",
+          "date": "2026-06-23T21:50:26-07:00",
+          "version": "v6.9",
+          "is_latest": true
+        }
+,
+        {
+          "checksum": "3e53ab06d0c8854bdf26547f0b81416e4a69c2ce44e9a4c4554587e3055b24bb",
+          "commit": "6dd0fa22488df81b587b152eb4ee2b30951d6515",
+          "date": "2026-01-29T20:10:22-08:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "adee01ff66889e4f06aadd743cd0b60c0dab91e6959b01318d3429767a80151e",
+          "commit": "a870c52ef980d203028cdfda3e2697ce92b1543c",
+          "date": "2026-01-27T22:00:40-08:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "f9165079884485afc70e350090a9c23406957c687c4d3932f7dfdba95a959c44",
+          "commit": "2f946c9e168a2a72f052124608d0b402d56106e5",
+          "date": "2026-01-27T17:59:16-08:00",
+          "version": "v5.2",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "d5dc9d32415da09c77bfda59484d7600ca73347cd19506d4561f9c015946a582",
+          "commit": "25acc859d3836346cf47bef3f29442cfc26dcf37",
+          "date": "2026-01-26T18:47:31-08:00",
+          "version": "v5.0",
+          "is_latest": false
+        }
+]},
+    ".just/lib/common.sh": {"versions": [
+        {
+          "checksum": "67a9951a5735bd8e2b5d71bea7337b2076fe54abddf27dea4f99ddc3e7c6f87e",
+          "commit": "7287b8bc3e88e3e24286df3082986195ad677f43",
+          "date": "2026-06-26T22:59:34-07:00",
+          "version": "",
+          "is_latest": true
+        }
+,
+        {
+          "checksum": "18302e9d7943292ea3e2cf7179918c4e0a880920009e41d98ef79260dd4304c3",
+          "commit": "2f946c9e168a2a72f052124608d0b402d56106e5",
+          "date": "2026-01-27T17:59:16-08:00",
+          "version": "v5.2",
+          "is_latest": false
+        }
+]},
+    ".just/lib/cue_sync_test.sh": {"versions": [
+        {
+          "checksum": "32860611ecb4475bcebd4865b94fed4fd559e79ba13cfcce6dfbcf21fb1dde36",
+          "commit": "b43cda4cc87f9f63c9f73cdfb9a07d79f8e0b994",
+          "date": "2026-06-29T11:59:13-07:00",
+          "version": "v8.1",
+          "is_latest": true
+        }
+,
+        {
+          "checksum": "ac5f0fa428b403564a7f0e0897e0145f356f01bc4dfd4a11056caa2d35da0a1c",
+          "commit": "ce09d6fede10d6423e875e943d6a4f8220f9dd66",
+          "date": "2026-06-29T10:40:02-07:00",
+          "version": "v8.0",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "bdb666bf1bcb521d4d88604cdabbf3ac59697ba68909c9792e4c873654ba8b7c",
+          "commit": "7287b8bc3e88e3e24286df3082986195ad677f43",
+          "date": "2026-06-26T22:59:34-07:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "cec47d5717f71f5795485b304b278923dff82e5f53f719cdebf753533e34d158",
+          "commit": "944a5866bf8c439c0b39b9ec3a3c436c8d8e2e7b",
+          "date": "2026-06-26T14:32:43-07:00",
+          "version": "v7.2",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "08cb54a7535043a2f475fae69629312918bd5cd46a1af4cb95b5355dd1525a31",
+          "commit": "d499305e2691f2601113a45003cf2dbf695f019d",
+          "date": "2026-06-23T21:50:26-07:00",
+          "version": "v6.9",
+          "is_latest": false
+        }
+]},
+    ".just/lib/cue_sync.awk": {"versions": [
+        {
+          "checksum": "13754398397699df8019710be9a074005f51e275e33d627381705e1f7a8b34ec",
+          "commit": "b43cda4cc87f9f63c9f73cdfb9a07d79f8e0b994",
+          "date": "2026-06-29T11:59:13-07:00",
+          "version": "v8.1",
+          "is_latest": true
+        }
+,
+        {
+          "checksum": "b7c0743c90676dc53956e3f67636619157731a293f0328fd3398fadc76cd4168",
+          "commit": "ce09d6fede10d6423e875e943d6a4f8220f9dd66",
+          "date": "2026-06-29T10:40:02-07:00",
+          "version": "v8.0",
+          "is_latest": false
+        }
+]},
+    ".just/lib/generate_checksums.sh": {"versions": [
+        {
+          "checksum": "a325886ba9b095ccfac8add9748ab177ca66685d26b0a422110c2788a7b5089a",
+          "commit": "ce09d6fede10d6423e875e943d6a4f8220f9dd66",
+          "date": "2026-06-29T10:40:02-07:00",
+          "version": "v8.0",
+          "is_latest": true
+        }
+,
+        {
+          "checksum": "67a34b1cdaec67a4229531550537d88753deb24022b95c053dee02b6f6238b86",
+          "commit": "944a5866bf8c439c0b39b9ec3a3c436c8d8e2e7b",
+          "date": "2026-06-26T14:32:43-07:00",
+          "version": "v7.2",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "03cb85d7973e998759e17f858dd6756aa69feacd35ab01dbbed0e75ba21f2bd5",
+          "commit": "59271f4fede60350d8a141729fd92fe798ab710a",
+          "date": "2026-06-20T14:53:57-04:00",
+          "version": "v6.7",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "979be68aca85892b761eb4a2a8342eea300bcac073e64802f9fb662eaead9d28",
+          "commit": "73d9e57268ef1bdf2662ea7c5437f455128c1d1d",
+          "date": "2026-03-22T20:52:08-07:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "008e4de92a2e076ec7cdc72117a25f1fc573aa9b47861a9b5a4e126a883f94cb",
+          "commit": "2f946c9e168a2a72f052124608d0b402d56106e5",
+          "date": "2026-01-27T17:59:16-08:00",
+          "version": "v5.2",
+          "is_latest": false
+        }
+]},
+    ".just/lib/install-prerequisites.sh": {"versions": [
+        {
+          "checksum": "badd72e8de8d4e843e7d3a4b51362e759d67063fe26f9714e3e8ae7238b65bbb",
+          "commit": "f2299dbedabf38f57521a29198e6916682c0ddf2",
+          "date": "2026-06-28T10:34:20-07:00",
+          "version": "v7.6",
+          "is_latest": true
+        }
+,
+        {
+          "checksum": "7ea52aee2f07360be9e45e0a23326714d4ec042adedc25653a0c7c6a702af928",
+          "commit": "568c76cfe3f47d4c9e8f35bc5ff7d9d58dc8f2ac",
+          "date": "2026-06-25T17:24:21-07:00",
+          "version": "v7.1",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "8ad88b05b97d46b9f37a40a4a8520d6419c711effb2ad6762280260ac7d31133",
+          "commit": "bf35bf743fb040da4a6f8f0d8be9ce499c564d76",
+          "date": "2026-05-01T19:34:47-07:00",
+          "version": "v6.5",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "153a826274ff03b0c42ccfb5024b202c78f02153804c0ef6c98b1df103c5dca5",
+          "commit": "f1ad2cba35c333913447b02e3e9d87f7424b1c8a",
+          "date": "2026-04-23T17:58:55-07:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "e9da4a5f97cfe9c9df74aff01421436b8bc89fd2f806f5a93a1582931502341d",
+          "commit": "64dd156676bd6b2e6c11cd2d518e5beb61de6433",
+          "date": "2026-01-28T17:47:51-08:00",
+          "version": "",
+          "is_latest": false
+        }
+]},
+    ".just/lib/pr_body_test.sh": {"versions": [
+        {
+          "checksum": "aec76ce50dfc2dd6c6e6c8449580e706b3cbb419c7373f86aa6b434bafea2e20",
+          "commit": "7287b8bc3e88e3e24286df3082986195ad677f43",
+          "date": "2026-06-26T22:59:34-07:00",
+          "version": "",
+          "is_latest": true
+        }
+,
+        {
+          "checksum": "5e7fecdecb3a2e7417bf94f511ff21dc25177c5c0e951f6eb28aa7b004670b1f",
+          "commit": "25acc859d3836346cf47bef3f29442cfc26dcf37",
+          "date": "2026-01-26T18:47:31-08:00",
+          "version": "v5.0",
+          "is_latest": false
+        }
+]},
+    ".just/lib/template_sync_test.sh": {"versions": [
+        {
+          "checksum": "20c0962c161ec80c5dab5da775e10e1cc147ce410694ad73804e39d91d4f3894",
+          "commit": "7287b8bc3e88e3e24286df3082986195ad677f43",
+          "date": "2026-06-26T22:59:34-07:00",
+          "version": "",
+          "is_latest": true
+        }
+,
+        {
+          "checksum": "e1b5336dac8440c3a4f831b94a78c9c7b07b0d4dd8668eed109e7f6e114a597e",
+          "commit": "2f946c9e168a2a72f052124608d0b402d56106e5",
+          "date": "2026-01-27T17:59:16-08:00",
+          "version": "v5.2",
+          "is_latest": false
+        }
+]},
+    ".just/lib/template_update.sh": {"versions": [
+        {
+          "checksum": "f5008d007e44dc23ac4b66da8c71edcaa4c0b6bccd6d5c029cb65e0ac7f3a0da",
+          "commit": "59271f4fede60350d8a141729fd92fe798ab710a",
+          "date": "2026-06-20T14:53:57-04:00",
+          "version": "v6.7",
+          "is_latest": true
+        }
+,
+        {
+          "checksum": "dfddad2e4d078b2cb3dc79f84fe867caabc3445bcf7f5e144e80af06214c6c0e",
+          "commit": "b2829dce75d11019decf0a1ad3af36c8fbe70bc2",
+          "date": "2026-04-23T16:28:02-07:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "4161bedd6b05a6070020f562ccc451c637895ab79efdca50659828333e647b0e",
+          "commit": "090d286b1df83bf38d1590826812741d184f1d41",
+          "date": "2026-03-22T21:15:59-07:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "925da60d8094a8473058c1779691126c61594b7fa21f9165ad57edd20d5d1b20",
+          "commit": "73d9e57268ef1bdf2662ea7c5437f455128c1d1d",
+          "date": "2026-03-22T20:52:08-07:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "511190258e60ede7094d3b1a2298e9c1bd29fe54b97e7631b972a3695eb9dd7c",
+          "commit": "6b9efe94fad3bb3f2dfe1acd02b2576091a39ae9",
+          "date": "2026-03-11T21:16:13-07:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "cc525e7a38c90d3370495ac85ac8e786c3f703c6529d11eac993bea6b0f65ad1",
+          "commit": "2f946c9e168a2a72f052124608d0b402d56106e5",
+          "date": "2026-01-27T17:59:16-08:00",
+          "version": "v5.2",
+          "is_latest": false
+        }
+]},
+    ".just/lib/update_pr_body.sh": {"versions": [
+        {
+          "checksum": "af703c3fbf68c2ab7ba8b804d5d90e46b07c1541f261b7efd1e4f89cc26b39ab",
+          "commit": "e49cb304b44f91618f2926a5a1c2817906ad6454",
+          "date": "2026-06-29T13:19:42-07:00",
+          "version": "v8.2",
+          "is_latest": true
+        }
+,
+        {
+          "checksum": "a278b87f8436c26d353d6603a3b5390d5a087c0732c62c2dbf95365c1af162b0",
+          "commit": "7287b8bc3e88e3e24286df3082986195ad677f43",
+          "date": "2026-06-26T22:59:34-07:00",
+          "version": "",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "3f7ed129dc17ec2022a430b0786d2cfd52bbd707a3badfaad4eff824bbd11bf0",
+          "commit": "7d8235c16304d2d250fe54ae32ec2ac63f687468",
+          "date": "2026-06-23T20:03:11-07:00",
+          "version": "v6.8",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "32c1e89ec2c81d7e8326564a184dd37e294545c77aa9f0ea13ca2b26759a6653",
+          "commit": "c25f8d5f0d1dfef88f9ab988c2aec9bb6712c8d3",
+          "date": "2026-03-21T12:36:04-07:00",
+          "version": "v5.8",
+          "is_latest": false
+        }
+,
+        {
+          "checksum": "262ce613ff7f572953570b2e45eb7ae39452797c9b32d8543259a27ee142e102",
+          "commit": "25acc859d3836346cf47bef3f29442cfc26dcf37",
+          "date": "2026-01-26T18:47:31-08:00",
+          "version": "v5.0",
+          "is_latest": false
+        }
+]},
+    ".just/lib/wait_for_copilot.sh": {"versions": [
+        {
+          "checksum": "cf0861e4b378734f9e9096c8fe9c7fb26e6ba5aeb29fdf772f336f5357eb2b9b",
+          "commit": "54418b66b70b98329631e981517344b02cb3d75f",
+          "date": "2026-08-14T17:35:59-07:00",
+          "version": "v8.4",
+          "is_latest": true
+        }
+]}
+  },
+  "cleaned_files": [
+    ".just/testing.just",
+    ".just/clean-template.just",
+    ".just/lib/pr_body_test.sh",
+    ".just/lib/template_sync_test.sh",
+    ".just/lib/cue_sync_test.sh",
+    ".just/test",
+    ".github/workflows/pr-body-tests.yml",
+    ".github/workflows/checksums-verify.yml",
+    ".github/workflows/cue-sync-tests.yml",
+    ".github/workflows/template-sync.yml"
+  ]
+}
