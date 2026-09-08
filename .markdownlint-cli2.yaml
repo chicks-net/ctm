@@ -1,4 +1,3 @@
 ignores:
-  - .just/test/fixtures/**
   - .opencode/**
 config: .markdownlint.yml
