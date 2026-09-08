@@ -1,0 +1,31 @@
+# project justfile
+
+import? '.just/compliance.just'
+import? '.just/gh-process.just'
+import? '.just/pr-hook.just'
+import? '.just/shellcheck.just'
+import? '.just/cue-verify.just'
+import? '.just/claude.just'
+import? '.just/copilot.just'
+import? '.just/repo-toml.just'
+
+# list recipes (default works without naming it)
+[group('Utility')]
+list:
+    just --list
+    @echo "{{GREEN}}Your justfile is waiting for more scripts and snippets{{NORMAL}}"
+
+# build the ctm binary
+[group('Utility')]
+build:
+    go build -o ctm .
+
+# run go tests
+[group('Testing/Automation')]
+test:
+    go test ./...
+
+# report files that need gofmt
+[group('Testing/Automation')]
+fmt:
+    @gofmt -l .

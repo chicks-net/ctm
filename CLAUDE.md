@@ -11,12 +11,23 @@ and v2.0 (40-byte responses, currently unimplemented beyond detection).
 ## Build and Run
 
 ```sh
-make          # builds ./ctm binary via `go build -o ctm .`
+just build    # builds ./ctm via `go build -o ctm .` (preferred)
+make          # same build via the Makefile
+just test     # go test ./...
+just fmt      # reports files needing gofmt
 go fmt .      # format code
 ```
 
 Module path is `github.com/chicks-net/ctm`, pinned to Go 1.25 (`go.mod`).
 No external dependencies — standard library only.
+
+The root `justfile` imports recipe modules from `.just/`:
+`compliance.just`, `gh-process.just` (PR lifecycle), `pr-hook.just`,
+`shellcheck.just`, `cue-verify.just`, `claude.just`, `copilot.just`,
+`repo-toml.just`.  Run `just` or `just --list` to see all recipes.
+`.repo.toml` holds repo metadata (description/topics/license/feature flags),
+validated by `cue vet .repo.toml docs/repo-toml.cue` via `just cue-verify`.
+`.just/repo-toml.sh` is generated (gitignored) by `just repo_toml_generate`.
 
 ## Usage
 

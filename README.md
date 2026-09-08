@@ -9,10 +9,23 @@ API1.1 clock.
 
 ## Install
 
-I'd like to get this in homebrew and Fedora repos eventually, but for now there
-is a `Makefile` that will build the program for you.  So in the main repo
-directory you should be able to run `make` and get a build of `ctm` for your
-platform.
+I'd like to get this in homebrew and Fedora repos eventually, but for now you
+can build the program yourself.  In the main repo directory either of these
+will build `ctm` for your platform:
+
+```bash
+just build   # via the justfile (also: just test, just fmt)
+make         # via the Makefile
+```
+
+## Development prerequisites
+
+The `just` recipes need a few tools installed: `just`, `gh`,
+`shellcheck`, `markdownlint-cli2`, `jq`, `gum`, `cue`, and the `gh-observer`
+gh extension.  On macOS with Homebrew, `./.just/lib/install-prerequisites.sh`
+checks for all of them and installs anything missing - run it once and you're
+set.  The `cue` CLI is new for contributors: it validates `.repo.toml` against
+`docs/repo-toml.cue` (`just cue-verify`).
 
 ## Usage
 
