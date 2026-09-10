@@ -34,8 +34,17 @@ set.  The `cue` CLI is new for contributors: it validates `.repo.toml` against
 Invocation:
 
 ```bash
-ctm $SUBCOMMAND $CLOCK_IP
+ctm [flags] $SUBCOMMAND [flags] $CLOCK_IP
 ```
+
+Global flags (may appear before or after the subcommand, but must precede
+positional args):
+
+- `-timeout duration` - how long to wait for a clock to respond
+  (default `2s`)
+- `-port` - UDP port the clock listens on (default `7372`)
+
+`ctm help` (or `ctm -h`, or `ctm $SUBCOMMAND -h`) prints usage.
 
 Subcommands:
 
