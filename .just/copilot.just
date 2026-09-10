@@ -166,7 +166,7 @@ copilot_pick: _on_a_pull_request
             }
             in_block { print }
         ')
-        
+
         if [[ -n "$suggested_code" && -f "$file_path" ]]; then
             # Validate file path to prevent command injection
             if [[ ! "$file_path" =~ ^[a-zA-Z0-9/_.-][a-zA-Z0-9/_.-]*$ ]]; then
@@ -181,25 +181,25 @@ copilot_pick: _on_a_pull_request
             relative_path=$(git ls-files --full-name "$file_path" 2>/dev/null || echo "$file_path")
             safe_path=$(echo "$relative_path" | sed 's|%|%25|g; s|/|%2F|g; s|_|%5F|g')
             backup_file="$backup_dir/${safe_path}_${timestamp}.bak"
-            
+
             cp "$file_path" "$backup_file"
             echo "{{YELLOW}}Created backup: $backup_file{{NORMAL}}"
-            
+
             # Show what will change - improved display
             echo "{{BLUE}}Will change:{{NORMAL}}"
             echo "File: $file_path"
             echo "Line: $original_line"
-            
+
             # Get current content
             current_line=$(sed -n "${original_line}p" "$file_path")
-            
+
             # Show diff-like output - use reliable line counting
             line_count=$(echo "$suggested_code" | wc -l | tr -d ' ')
             # Add 1 if the string doesn't end with newline
             if [[ ! "$suggested_code" =~ $'\n'$ ]]; then
                 line_count=$((line_count + 1))
             fi
-            
+
             if [[ $line_count -eq 1 ]]; then
                 # Single line change
                 echo "- $current_line"
@@ -211,7 +211,7 @@ copilot_pick: _on_a_pull_request
                 echo "  $line_count lines total"
             fi
             echo ""
-            
+
             if gum confirm "Confirm this change?"; then
                 # Apply the change - use temp file approach for multi-line safety
                 # Use reliable line counting
@@ -219,11 +219,11 @@ copilot_pick: _on_a_pull_request
                 if [[ ! "$suggested_code" =~ $'\n'$ ]]; then
                     line_count=$((line_count + 1))
                 fi
-                
+
                 # Check if this looks like a multi-line replacement by examining the suggestion body
                 # Look for patterns that suggest replacing multiple lines
                 replacement_lines=$(echo "$suggestion_body" | grep -i "replace\|change" | grep -o "lines\?[[:space:]]*[0-9]\+-[0-9]\+\|lines\?[[:space:]]*[0-9]\+" | head -1)
-                
+
                 if [[ $line_count -gt 1 ]] || [[ -n "$replacement_lines" ]]; then
                     # Multi-line: split file, insert new content, rejoin
                     # Currently we only replace one line as Copilot API doesn't provide line ranges
@@ -241,11 +241,11 @@ copilot_pick: _on_a_pull_request
                     sed "${original_line}s|.*|${escaped_code}|" "$file_path" > "${file_path}.tmp"
                     mv "${file_path}.tmp" "$file_path"
                 fi
-                
+
                 # Verify the change was applied successfully
                 if [[ -s "$file_path" ]]; then
                     echo "{{GREEN}}✓ Successfully applied change to $file_path:$original_line{{NORMAL}}"
-                    
+
                     # Offer to push changes
                     if gum confirm "Push changes to PR?"; then
                         if command -v just &>/dev/null; then
@@ -526,7 +526,7 @@ copilot_rollback:
     backups=()
     backup_targets=()
     i=1
-    
+
     for backup in "$BACKUP_DIR"/*.bak; do
         if [[ -f "$backup" ]]; then
             filename=$(basename "$backup")
@@ -620,7 +620,7 @@ copilot_rollback:
     if gum confirm "Restore this backup?"; then
         cp "$selected_backup" "$target_file"
         echo "{{GREEN}}✓ Restored $target_file from backup{{NORMAL}}"
-        
+
         if gum confirm "Push restored file to PR?"; then
             if command -v just &>/dev/null; then
                 just again
