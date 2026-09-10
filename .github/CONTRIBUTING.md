@@ -73,7 +73,8 @@ The full development cycle works via the command line.
   on `main` (release) branch with the latest `git pull`ed.
 
 Run `just` anywhere in the repo to see which subcommands are available here.
-You should get a more colorful version of this:
+You should get a more colorful version of this
+(sample output is a snapshot and will drift as recipes are added or renamed):
 
 ```bash
 % just
