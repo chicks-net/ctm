@@ -63,11 +63,11 @@ func newFakeConfig(reply []byte) (*clockConfig, chan *fakeConn) {
 	return cfg, conns
 }
 
-// run_command drives the real command tree with argv, mirroring what
+// runCommand drives the real command tree with argv, mirroring what
 // main() does with os.Args
-func run_command(t *testing.T, cfg *clockConfig, argv ...string) error {
+func runCommand(t *testing.T, cfg *clockConfig, argv ...string) error {
 	t.Helper()
-	root := new_command_tree(cfg)
+	root := newCommandTree(cfg)
 	return root.ParseAndRun(context.Background(), argv)
 }
 
@@ -88,18 +88,18 @@ func TestSetTimerWireFormat(t *testing.T) {
 // TestResponse20WireFormat pins the 40-byte API 2.0 status packet
 func TestResponse20WireFormat(t *testing.T) {
 	r20 := Response20{
-		DeviceType:  0x01,
-		ClientIP:    IPAddr{192, 168, 42, 204},
-		MAC_address: [6]uint8{0x70, 0xb3, 0xd5, 0x75, 0x68, 0xe2},
-		FirmwareVer: [2]uint8{5, 0},
-		NTPSyncCnt:  4654,
-		DisplayTime: Time20{Hour: 12, Minute: 34, Second: 56, Tenths: 7},
-		DisplayMode: 0x01 | 0x40,
-		DownAlarm:   0x85,
-		Days:        3,
-		Digits:      2,
-		WifiSignal:  58,
-		DeviceName:  [16]uint8{'P', 'O', 'E', '_', 'C', 'l', 'o', 'c', 'k'},
+		DeviceType:   0x01,
+		ClientIP:     IPAddr{192, 168, 42, 204},
+		MACAddress:   [6]uint8{0x70, 0xb3, 0xd5, 0x75, 0x68, 0xe2},
+		FirmwareVer:  [2]uint8{5, 0},
+		NTPSyncCount: 4654,
+		DisplayTime:  Time20{Hour: 12, Minute: 34, Second: 56, Tenths: 7},
+		DisplayMode:  0x01 | 0x40,
+		DownAlarm:    0x85,
+		Days:         3,
+		Digits:       2,
+		WifiSignal:   58,
+		DeviceName:   [16]uint8{'P', 'O', 'E', '_', 'C', 'l', 'o', 'c', 'k'},
 	}
 	var buf bytes.Buffer
 	if err := binary.Write(&buf, binary.BigEndian, r20); err != nil {
@@ -144,7 +144,7 @@ func r10Bytes() []byte {
 		192, 168, 42, 204, // ClientIP
 		0x70, 0xb3, 0xd5, 0x75, 0x68, 0xe2, // MAC
 		0x05, 0x00, // FirmwareVer
-		0x12, 0x2e, // NTPSyncCnt
+		0x12, 0x2e, // NTPSyncCount
 		2, 42, 44, // DisplayTime
 	}
 	b = append(b, "POE_Clock_UTC"...)
@@ -191,12 +191,12 @@ func TestLocatorCommands(t *testing.T) {
 		"up_set_time":     "\xaa",
 		"down_set_time":   "\xab",
 	}
-	if len(locator_commands) != len(want) {
-		t.Errorf("locator_commands has %d entries, want %d", len(locator_commands), len(want))
+	if len(locatorCommands) != len(want) {
+		t.Errorf("locatorCommands has %d entries, want %d", len(locatorCommands), len(want))
 	}
 	for name, wantBytes := range want {
-		if got := locator_commands[name]; got != wantBytes {
-			t.Errorf("locator_commands[%q] = % x, want % x", name, got, wantBytes)
+		if got := locatorCommands[name]; got != wantBytes {
+			t.Errorf("locatorCommands[%q] = % x, want % x", name, got, wantBytes)
 		}
 	}
 }
@@ -224,19 +224,19 @@ func TestExtractTimePart(t *testing.T) {
 		{time: "256:0:0", part: 0, fails: true}, // one past the boundary
 	}
 	for _, tc := range tests {
-		got, err := extract_time_part(tc.time, tc.part)
+		got, err := extractTimePart(tc.time, tc.part)
 		if tc.fails {
 			if err == nil {
-				t.Errorf("extract_time_part(%q, %d) = %d, want error", tc.time, tc.part, got)
+				t.Errorf("extractTimePart(%q, %d) = %d, want error", tc.time, tc.part, got)
 			}
 			continue
 		}
 		if err != nil {
-			t.Errorf("extract_time_part(%q, %d) unexpected error: %v", tc.time, tc.part, err)
+			t.Errorf("extractTimePart(%q, %d) unexpected error: %v", tc.time, tc.part, err)
 			continue
 		}
 		if got != tc.want {
-			t.Errorf("extract_time_part(%q, %d) = %d, want %d", tc.time, tc.part, got, tc.want)
+			t.Errorf("extractTimePart(%q, %d) = %d, want %d", tc.time, tc.part, got, tc.want)
 		}
 	}
 }
@@ -258,8 +258,8 @@ func TestDisplayModeString(t *testing.T) {
 		{mode: 0x61, want: "up timer, running, D:H:M"},
 	}
 	for _, tc := range tests {
-		if got := display_mode_string(tc.mode); got != tc.want {
-			t.Errorf("display_mode_string(%#x) = %q, want %q", tc.mode, got, tc.want)
+		if got := displayModeString(tc.mode); got != tc.want {
+			t.Errorf("displayModeString(%#x) = %q, want %q", tc.mode, got, tc.want)
 		}
 	}
 }
@@ -311,10 +311,10 @@ func TestSendCommandDispatch(t *testing.T) {
 	}
 	ack := []byte{'A', 0x00}
 	for verb, name := range verbFor {
-		wire := locator_commands[name]
+		wire := locatorCommands[name]
 		t.Run(verb, func(t *testing.T) {
 			cfg, conns := newFakeConfig(ack)
-			err := run_command(t, cfg, verb, "192.168.42.204")
+			err := runCommand(t, cfg, verb, "192.168.42.204")
 			if err != nil {
 				t.Fatalf("ctm %s: %v", verb, err)
 			}
@@ -336,11 +336,11 @@ func TestSendCommandDispatch(t *testing.T) {
 // TestSendCommandBadResponse makes sure a non-ack reply is an error
 func TestSendCommandBadResponse(t *testing.T) {
 	cfg, _ := newFakeConfig([]byte{'N', 0x00})
-	err := run_command(t, cfg, "up_run", "192.168.42.204")
+	err := runCommand(t, cfg, "up_run", "192.168.42.204")
 	if err == nil {
 		t.Fatal("expected an error when the clock does not ack")
 	}
-	if !strings.Contains(err.Error(), "acknowldgement") {
+	if !strings.Contains(err.Error(), "acknowledgement") {
 		t.Errorf("error %q does not mention the missing acknowledgement", err)
 	}
 }
@@ -348,7 +348,7 @@ func TestSendCommandBadResponse(t *testing.T) {
 // TestSendCommandWrongSize makes sure an unexpected packet size is an error
 func TestSendCommandWrongSize(t *testing.T) {
 	cfg, _ := newFakeConfig([]byte{'A'})
-	err := run_command(t, cfg, "up_run", "192.168.42.204")
+	err := runCommand(t, cfg, "up_run", "192.168.42.204")
 	if err == nil {
 		t.Fatal("expected an error for a short ack packet")
 	}
@@ -359,13 +359,13 @@ func TestSendCommandWrongSize(t *testing.T) {
 
 // TestRequireAddress covers the arg-count validation for subcommands
 func TestRequireAddress(t *testing.T) {
-	if _, err := require_address("status", nil); err == nil {
+	if _, err := requireAddress("status", nil); err == nil {
 		t.Error("expected an error with no args")
 	}
-	if _, err := require_address("status", []string{"a", "b"}); err == nil {
+	if _, err := requireAddress("status", []string{"a", "b"}); err == nil {
 		t.Error("expected an error with two args")
 	}
-	addr, err := require_address("status", []string{"192.168.42.204"})
+	addr, err := requireAddress("status", []string{"192.168.42.204"})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -389,7 +389,7 @@ func TestRequireAddressDispatch(t *testing.T) {
 	}
 	for _, tc := range tests {
 		cfg, conns := newFakeConfig([]byte{'A', 0x00})
-		err := run_command(t, cfg, tc.argv...)
+		err := runCommand(t, cfg, tc.argv...)
 		if tc.fails && err == nil {
 			t.Errorf("ctm %v: expected an error", tc.argv)
 		}
@@ -407,14 +407,14 @@ func TestRequireAddressDispatch(t *testing.T) {
 func TestStatusDispatch(t *testing.T) {
 	t.Run("v1", func(t *testing.T) {
 		cfg, conns := newFakeConfig(r10Bytes())
-		err := run_command(t, cfg, "status", "192.168.42.204")
+		err := runCommand(t, cfg, "status", "192.168.42.204")
 		if err != nil {
 			t.Fatalf("status: %v", err)
 		}
 		select {
 		case fc := <-conns:
-			if got := fc.sendBuf.String(); got != locator_commands["device_query"] {
-				t.Errorf("status sent % x, want % x", got, locator_commands["device_query"])
+			if got := fc.sendBuf.String(); got != locatorCommands["device_query"] {
+				t.Errorf("status sent % x, want % x", got, locatorCommands["device_query"])
 			}
 		default:
 			t.Fatal("no connection was opened")
@@ -436,13 +436,13 @@ func TestStatusDispatch(t *testing.T) {
 		copy(packet[24:40], "POE_Clock")
 
 		cfg, _ := newFakeConfig(packet)
-		if err := run_command(t, cfg, "status", "192.168.42.204"); err != nil {
+		if err := runCommand(t, cfg, "status", "192.168.42.204"); err != nil {
 			t.Fatalf("status: %v", err)
 		}
 	})
 	t.Run("unexpected size", func(t *testing.T) {
 		cfg, _ := newFakeConfig(make([]byte, 37))
-		err := run_command(t, cfg, "status", "192.168.42.204")
+		err := runCommand(t, cfg, "status", "192.168.42.204")
 		if err == nil {
 			t.Fatal("expected an error for a 37-byte packet")
 		}
@@ -468,7 +468,7 @@ func TestSetTimeDispatch(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name+" "+tc.time, func(t *testing.T) {
 			cfg, conns := newFakeConfig([]byte{'A', 0x00})
-			err := run_command(t, cfg, tc.name, "192.168.42.204", tc.time)
+			err := runCommand(t, cfg, tc.name, "192.168.42.204", tc.time)
 			if err != nil {
 				t.Fatalf("ctm %s %s: %v", tc.name, tc.time, err)
 			}
@@ -489,7 +489,7 @@ func TestSetTimeDispatch(t *testing.T) {
 // clock is ever dialed
 func TestSetTimeRangeRejectDispatch(t *testing.T) {
 	cfg, conns := newFakeConfig([]byte{'A', 0x00})
-	err := run_command(t, cfg, "up_set_time", "192.168.42.204", "300:0:0")
+	err := runCommand(t, cfg, "up_set_time", "192.168.42.204", "300:0:0")
 	if err == nil {
 		t.Fatal("expected out-of-range hours to be an error")
 	}
@@ -517,7 +517,7 @@ func TestFlagsInBothPositions(t *testing.T) {
 					return &fakeConn{reply: []byte{'A', 0x00}}, nil
 				},
 			}
-			err := run_command(t, cfg, argv...)
+			err := runCommand(t, cfg, argv...)
 			if err != nil {
 				t.Fatalf("ctm %v: %v", argv, err)
 			}
@@ -543,7 +543,7 @@ func TestFlagsTimeoutReachesDialer(t *testing.T) {
 					return &fakeConn{reply: []byte{'A', 0x00}}, nil
 				},
 			}
-			err := run_command(t, cfg, argv...)
+			err := runCommand(t, cfg, argv...)
 			if err != nil {
 				t.Fatalf("ctm %v: %v", argv, err)
 			}
@@ -560,7 +560,7 @@ func TestFlagsTimeoutReachesDialer(t *testing.T) {
 // binary - that behavior is only exercised by hand.)
 func TestHelpCommand(t *testing.T) {
 	cfg := &clockConfig{}
-	if err := run_command(t, cfg, "help"); err != nil {
+	if err := runCommand(t, cfg, "help"); err != nil {
 		t.Errorf("ctm help: %v", err)
 	}
 }
@@ -568,7 +568,7 @@ func TestHelpCommand(t *testing.T) {
 // TestUnknownSubcommand checks the root Exec's fallback error
 func TestUnknownSubcommand(t *testing.T) {
 	cfg := &clockConfig{}
-	err := run_command(t, cfg, "frobnicate", "192.168.42.204")
+	err := runCommand(t, cfg, "frobnicate", "192.168.42.204")
 	if err == nil {
 		t.Fatal("expected an error for an unknown subcommand")
 	}
@@ -593,12 +593,12 @@ func TestDialClockHappyPath(t *testing.T) {
 		if err != nil {
 			return
 		}
-		server.WriteTo(buf[:n], client)
+		_, _ = server.WriteTo(buf[:n], client)
 	}()
 
-	conn, err := dial_clock(server.LocalAddr().String(), time.Second)
+	conn, err := dialClock(server.LocalAddr().String(), time.Second)
 	if err != nil {
-		t.Fatalf("dial_clock: %v", err)
+		t.Fatalf("dialClock: %v", err)
 	}
 	defer conn.Close()
 
@@ -626,13 +626,17 @@ func TestDialClockTimeout(t *testing.T) {
 
 	const timeout = 300 * time.Millisecond
 	start := time.Now()
-	conn, err := dial_clock(blackhole.LocalAddr().String(), timeout)
+	conn, err := dialClock(blackhole.LocalAddr().String(), timeout)
 	if err != nil {
-		t.Fatalf("dial_clock: %v", err)
+		t.Fatalf("dialClock: %v", err)
 	}
 	defer conn.Close()
 
-	conn.Write([]byte("ping")) // ensure the UDP socket is connected
+	// ensure the UDP socket is connected; a failed write would hang
+	// the read below until the deadline, so fail fast instead
+	if _, err := conn.Write([]byte("ping")); err != nil {
+		t.Fatalf("write: %v", err)
+	}
 	buf := make([]byte, maxBufferSize)
 	_, readErr := conn.Read(buf)
 	elapsed := time.Since(start)
@@ -642,16 +646,16 @@ func TestDialClockTimeout(t *testing.T) {
 	if elapsed > 2*timeout {
 		t.Errorf("read took %v, want it to give up around %v", elapsed, timeout)
 	}
-	wrapped := read_error(blackhole.LocalAddr().String(), timeout, readErr)
+	wrapped := readError(blackhole.LocalAddr().String(), timeout, readErr)
 	if !strings.Contains(wrapped.Error(), "did not respond") {
-		t.Errorf("read_error %q does not explain the timeout", wrapped)
+		t.Errorf("readError %q does not explain the timeout", wrapped)
 	}
 }
 
 // TestDialClockBadAddress makes sure an undialable address is a
 // clean error, not a panic
 func TestDialClockBadAddress(t *testing.T) {
-	_, err := dial_clock("", time.Second)
+	_, err := dialClock("", time.Second)
 	if err == nil {
 		t.Fatal("expected an error for an empty address")
 	}

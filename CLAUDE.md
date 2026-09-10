@@ -58,34 +58,34 @@ positional args): `-timeout duration` (default `2s`) and `-port` (default `7372`
 
 Everything lives in `main.go`. The code is organized around:
 
-- **`ffcli` command tree** — `new_command_tree(config)` builds a root `ffcli.Command` with one
+- **`ffcli` command tree** — `newCommandTree(config)` builds a root `ffcli.Command` with one
   subcommand per verb (called by `main()` and by the tests);
-  `mode_command` is the shared builder for simple mode switches, `set_time_command` for timer-set
-  commands, and `status_command` wraps its bespoke logic
+  `modeCommand` is the shared builder for simple mode switches, `setTimeCommand` for timer-set
+  commands, and `statusCommand` wraps its bespoke logic
 - **`clockConfig`** — shared `-timeout`/`-port` flag values, registered on the root and every
   subcommand flag set so flags work in either position; `addrport` joins host and port;
   the `dial` field is a test seam that swaps in a fake connection (production leaves it nil)
-- **`locator_commands` map** — string subcommand names to hex command bytes
-- **`get_status(dial, address, timeout)`** — sends a status query, decodes and prints the response
-- **`send_command(dial, address, timeout, command)`** — sends a simple mode-switch command, expects an ACK
-- **`send_set_command(dial, address, timeout, command, time)`** — sends a `SetTimer` struct for `up_set_time`/`down_set_time`
-- **`extract_time_part(time, part)`** — parses a colon-delimited time string by index
+- **`locatorCommands` map** — string subcommand names to hex command bytes
+- **`getStatus(dial, address, timeout)`** — sends a status query, decodes and prints the response
+- **`sendCommand(dial, address, timeout, command)`** — sends a simple mode-switch command, expects an ACK
+- **`sendSetCommand(dial, address, timeout, command, time)`** — sends a `SetTimer` struct for `up_set_time`/`down_set_time`
+- **`extractTimePart(value, part)`** — parses a colon-delimited time string by index
   (components must be 0-255)
 
 Wire format structs (all use `encoding/binary` with big-endian):
 
-- `Response10` (34 bytes) — API v1.x status packet; the wire packet is 35 bytes, so
-  one trailing byte is ignored as padding
-- `Response20` (40 bytes) — API v2.0 status packet, fully decoded and printed by `status`
+- `Response10` (34 bytes) — API v1.x status packet; the wire packet is 35 bytes
+  (`api1PacketSize`), so one trailing byte is ignored as padding
+- `Response20` (40 bytes, `api2PacketSize`) — API v2.0 status packet, fully decoded and printed by `status`
 - `SetTimer` (6 bytes) — timer set command payload
 - `Time10` / `Time20` — time display sub-fields (3 vs 4 bytes)
 
 ## Testing
 
 `main_test.go` covers the wire structs, command bytes, time parsing, and subcommand
-dispatch.  Dispatch tests drive the real `ffcli` tree via `new_command_tree` with a
-`fakeConn` installed on `clockConfig.dial`; `dial_clock` itself is tested against
-loopback UDP sockets (happy path, timeout, bad address).  Coverage is ~82%.
+dispatch.  Dispatch tests drive the real `ffcli` tree via `newCommandTree` with a
+`fakeConn` installed on `clockConfig.dial`; `dialClock` itself is tested against
+loopback UDP sockets (happy path, timeout, bad address).  Coverage is ~81%.
 `-h` cannot be tested in-process because the flag sets use `flag.ExitOnError`.
 
 ## Known Gaps
