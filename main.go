@@ -310,7 +310,7 @@ func main() {
 			set_time := os.Args[3]
 			return send_set_command(clock_addrport, "up_set_time", set_time) // but don't be upset :)
 		default:
-			panic("undefined subcommand")
+			return fmt.Errorf("undefined subcommand: %s", os.Args[1])
 		}
 	}()
 	if err != nil {
