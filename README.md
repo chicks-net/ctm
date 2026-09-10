@@ -6,8 +6,8 @@
 Control Time Machines (`ctm`) lets you control clocks
 from [Time Machines Corp.](https://timemachinescorp.com).
 
-Status: Can retrieve status, use uptimers and go back to time mode with an
-API1.1 clock.
+Status: Can retrieve status, use uptimers and downtimers with an
+API1.1 or API2.0 clock.
 
 ## Install
 
@@ -60,6 +60,10 @@ Subcommands:
   hours`:`minutes`:`seconds`:`tenths`:`hundreths and you can drop off any of
   the smaller units that are irrelevant to you.  If you want no hours you still
   need to start with `0:`.
+- `down_run` tells the downtimer to run (API2.0 clocks only)
+- `down_pause` tells the downtimer to pause (API2.0 clocks only)
+- `down_set_time H:M:S:tenths:hundreds` sets the downtimer like
+  `up_set_time` sets the uptimer (API2.0 clocks only)
 
 Status output looks like:
 
@@ -96,7 +100,6 @@ acked by clock
 ## Known bugs
 
 - Unimplemented:
-  - downtimers - doable but not coded yet (issue #3)
   - setting dotmatrix text - I don't have a device to test this with yet.
   - exec stored program (API2.0)
   - relay close (API2.0)

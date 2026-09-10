@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `ctm` is a CLI tool for controlling [Time Machines Corporation](https://timemachinescorp.com) network clocks
 over UDP (port 7372). It implements their Locator Protocol API, supporting both v1.x (35-byte responses)
-and v2.0 (40-byte responses, currently unimplemented beyond detection).
+and v2.0 (40-byte responses).
 
 ## Build and Run
 
@@ -47,7 +47,8 @@ ctm [flags] $SUBCOMMAND [flags] $CLOCK_IP
 ```
 
 Subcommands: `status`, `time`, `up_ms`, `up_hms`, `up_run`, `up_pause`, `up_reset_ms`, `up_reset_hms`,
-`up_set_time H:M:S:tenths:hundredths` (trailing components optional, but leading zeros required, e.g. `0:30`).
+`up_set_time H:M:S:tenths:hundredths` (trailing components optional, but leading zeros required, e.g. `0:30`),
+`down_run`, `down_pause`, `down_set_time H:M:S:tenths:hundredths` (same time syntax as `up_set_time`).
 
 Global flags (may appear before or after the subcommand, but must precede
 positional args): `-timeout duration` (default `2s`) and `-port` (default `7372`).
@@ -58,25 +59,24 @@ positional args): `-timeout duration` (default `2s`) and `-port` (default `7372`
 Everything lives in `main.go`. The code is organized around:
 
 - **`ffcli` command tree** — `main()` builds a root `ffcli.Command` with one subcommand per verb;
-  `mode_command` is the shared builder for simple mode switches, `status_command` and `up_set_time_command`
-  wrap their bespoke logic
+  `mode_command` is the shared builder for simple mode switches, `set_time_command` for timer-set
+  commands, and `status_command` wraps its bespoke logic
 - **`clockConfig`** — shared `-timeout`/`-port` flag values, registered on the root and every
   subcommand flag set so flags work in either position; `addrport` joins host and port
 - **`locator_commands` map** — string subcommand names to hex command bytes
 - **`get_status(address, timeout)`** — sends a status query, decodes and prints the response
 - **`send_command(address, timeout, command)`** — sends a simple mode-switch command, expects an ACK
-- **`send_set_command(address, timeout, command, time)`** — sends a `SetTimer` struct for `up_set_time`
+- **`send_set_command(address, timeout, command, time)`** — sends a `SetTimer` struct for `up_set_time`/`down_set_time`
 - **`extract_time_part(time, part)`** — parses a colon-delimited time string by index
 
 Wire format structs (all use `encoding/binary` with big-endian):
 
 - `Response10` (35 bytes) — API v1.x status packet
-- `Response20` (40 bytes) — API v2.0 status packet (parsed but features unimplemented)
+- `Response20` (40 bytes) — API v2.0 status packet, fully decoded and printed by `status`
 - `SetTimer` (6 bytes) — timer set command payload
 - `Time10` / `Time20` — time display sub-fields (3 vs 4 bytes)
 
 ## Known Gaps
 
-- API 2.0 features return a "not implemented" error if encountered: downtimers, dotmatrix text, relay, dimmer, RGB color, exec stored program
-- Downtimer subcommands (`down_run`, `down_pause`, `down_set_time`) not yet implemented (tracked: [issue #3](https://github.com/chicks-net/ctm/issues/3))
+- API 2.0 features not implemented: dotmatrix text, relay, dimmer, RGB color, exec stored program
 - UDP reads wait up to `-timeout` (default 2s); a silent clock exits with an error instead of hanging
