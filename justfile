@@ -26,6 +26,12 @@ build:
 test:
     go test ./...
 
+# run go tests
+[group('Testing/Automation')]
+local-test: build
+	sudo ./ctm status 192.168.42.208
+	sudo ./ctm status 192.168.42.204
+
 # report files that need gofmt
 [group('Testing/Automation')]
 fmt:
