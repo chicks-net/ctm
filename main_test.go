@@ -194,9 +194,9 @@ func TestLocatorCommands(t *testing.T) {
 	if len(locator_commands) != len(want) {
 		t.Errorf("locator_commands has %d entries, want %d", len(locator_commands), len(want))
 	}
-	for name, bytes := range want {
-		if got := locator_commands[name]; got != bytes {
-			t.Errorf("locator_commands[%q] = % x, want % x", name, got, bytes)
+	for name, wantBytes := range want {
+		if got := locator_commands[name]; got != wantBytes {
+			t.Errorf("locator_commands[%q] = % x, want % x", name, got, wantBytes)
 		}
 	}
 }
@@ -648,12 +648,12 @@ func TestDialClockTimeout(t *testing.T) {
 	}
 }
 
-// TestDialClockBadAddress makes sure an unresolvable address is a
+// TestDialClockBadAddress makes sure an undialable address is a
 // clean error, not a panic
 func TestDialClockBadAddress(t *testing.T) {
-	_, err := dial_clock("256.256.256.256:7372", time.Second)
+	_, err := dial_clock("", time.Second)
 	if err == nil {
-		t.Fatal("expected an error for an invalid address")
+		t.Fatal("expected an error for an empty address")
 	}
 	if !strings.Contains(err.Error(), "connecting to") {
 		t.Errorf("error %q does not mention the connection failure", err)
