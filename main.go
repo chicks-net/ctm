@@ -2,15 +2,19 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
 	"encoding/hex"
 	"errors"
+	"flag"
 	"fmt"
 	"net"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/peterbourgon/ff/v3/ffcli"
 )
 
 type IPAddr [4]byte
@@ -67,7 +71,10 @@ type SetTimer struct {
 
 const maxBufferSize = 48 // the biggest response packet is 40 bytes
 
-const udpTimeout = 2 * time.Second // how long to wait for a clock to respond
+const (
+	defaultTimeout = 2 * time.Second // how long to wait for a clock to respond
+	defaultPort    = 7372            // UDP port the clocks listen on
+)
 
 var (
 	locator_commands = make(map[string]string)
@@ -93,23 +100,43 @@ func (ip IPAddr) String() string {
 	return fmt.Sprintf("%v.%v.%v.%v", int(ip[0]), int(ip[1]), int(ip[2]), int(ip[3]))
 }
 
+// clockConfig holds the shared command-line settings that every
+// subcommand accepts.  The same config is bound to the root flag set and
+// to every subcommand flag set, so -timeout and -port may be spelled
+// either before or after the subcommand name.
+type clockConfig struct {
+	timeout time.Duration
+	port    int
+}
+
+// register binds the shared -timeout and -port flags onto a flag set
+func (c *clockConfig) register(fs *flag.FlagSet) {
+	fs.DurationVar(&c.timeout, "timeout", defaultTimeout, "how long to wait for a clock to respond")
+	fs.IntVar(&c.port, "port", defaultPort, "UDP port the clock listens on")
+}
+
+// addrport joins a clock host with the configured port
+func (c *clockConfig) addrport(host string) string {
+	return net.JoinHostPort(host, strconv.Itoa(c.port))
+}
+
 // convert a failed clock read into a clear error, calling out the
 // timeout case so a silent clock is not mistaken for a crash
-func read_error(address string, err error) error {
+func read_error(address string, timeout time.Duration, err error) error {
 	if errors.Is(err, os.ErrDeadlineExceeded) {
-		return fmt.Errorf("clock at %s did not respond (timeout after %s)", address, udpTimeout)
+		return fmt.Errorf("clock at %s did not respond (timeout after %s)", address, timeout)
 	}
 	return fmt.Errorf("reading response from %s: %w", address, err)
 }
 
 // dial the clock and arm a read deadline so a silent clock cannot
 // block the caller forever
-func dial_clock(address string) (net.Conn, error) {
+func dial_clock(address string, timeout time.Duration) (net.Conn, error) {
 	conn, err := net.Dial("udp", address)
 	if err != nil {
 		return nil, fmt.Errorf("connecting to %s: %w", address, err)
 	}
-	err = conn.SetReadDeadline(time.Now().Add(udpTimeout))
+	err = conn.SetReadDeadline(time.Now().Add(timeout))
 	if err != nil {
 		conn.Close()
 		return nil, fmt.Errorf("setting read deadline on %s: %w", address, err)
@@ -118,8 +145,8 @@ func dial_clock(address string) (net.Conn, error) {
 }
 
 // functions that talk to the clock
-func get_status(address string) error {
-	conn, err := dial_clock(address)
+func get_status(address string, timeout time.Duration) error {
+	conn, err := dial_clock(address, timeout)
 	if err != nil {
 		return err
 	}
@@ -164,13 +191,13 @@ func get_status(address string) error {
 			return fmt.Errorf("unexpected number of bytes returned so we don't know which protocol it is talking")
 		}
 	} else {
-		return read_error(address, err)
+		return read_error(address, timeout, err)
 	}
 	return nil
 }
 
-func send_command(address string, command string) error {
-	conn, err := dial_clock(address)
+func send_command(address string, timeout time.Duration, command string) error {
+	conn, err := dial_clock(address, timeout)
 	if err != nil {
 		return err
 	}
@@ -196,7 +223,7 @@ func send_command(address string, command string) error {
 		}
 		fmt.Println("acked by clock")
 	} else {
-		return read_error(address, err)
+		return read_error(address, timeout, err)
 	}
 	return nil
 }
@@ -214,35 +241,35 @@ func extract_time_part(time string, part int) (uint8, error) {
 	return uint8(0), nil
 }
 
-func send_set_command(address string, command string, time string) error {
+func send_set_command(address string, timeout time.Duration, command string, time_string string) error {
 	var err error
 	set_struct := SetTimer{}
 	set_struct.Command = uint8(locator_commands["up_set_time"][0])
 
-	set_struct.Hour, err = extract_time_part(time, 0)
+	set_struct.Hour, err = extract_time_part(time_string, 0)
 	if err != nil {
 		return err
 	}
-	set_struct.Minute, err = extract_time_part(time, 1)
+	set_struct.Minute, err = extract_time_part(time_string, 1)
 	if err != nil {
 		return err
 	}
-	set_struct.Second, err = extract_time_part(time, 2)
+	set_struct.Second, err = extract_time_part(time_string, 2)
 	if err != nil {
 		return err
 	}
-	set_struct.Tenths, err = extract_time_part(time, 3)
+	set_struct.Tenths, err = extract_time_part(time_string, 3)
 	if err != nil {
 		return err
 	}
-	set_struct.Hundredths, err = extract_time_part(time, 4)
+	set_struct.Hundredths, err = extract_time_part(time_string, 4)
 	if err != nil {
 		return err
 	}
 
 	fmt.Println(set_struct)
 
-	conn, err := dial_clock(address)
+	conn, err := dial_clock(address, timeout)
 	if err != nil {
 		return err
 	}
@@ -274,47 +301,127 @@ func send_set_command(address string, command string, time string) error {
 		}
 		fmt.Println("acked by clock")
 	} else {
-		return read_error(address, err)
+		return read_error(address, timeout, err)
 	}
 	return nil
 }
 
+// functions that build the command-line interface
+
+// command_flagset builds the flag set for a subcommand, carrying the
+// shared clock flags
+func command_flagset(cfg *clockConfig, name string) *flag.FlagSet {
+	fs := flag.NewFlagSet(name, flag.ExitOnError)
+	cfg.register(fs)
+	return fs
+}
+
+// require_address validates that a subcommand got exactly one
+// positional argument - the clock address
+func require_address(name string, args []string) (string, error) {
+	if len(args) != 1 {
+		return "", fmt.Errorf("%s requires exactly 1 argument (the clock address), got %d", name, len(args))
+	}
+	return args[0], nil
+}
+
+// status_command builds the subcommand that queries a clock's status
+func status_command(cfg *clockConfig) *ffcli.Command {
+	return &ffcli.Command{
+		Name:       "status",
+		ShortUsage: "ctm status [flags] <address>",
+		ShortHelp:  "query the clock and print its status",
+		FlagSet:    command_flagset(cfg, "status"),
+		Exec: func(_ context.Context, args []string) error {
+			address, err := require_address("status", args)
+			if err != nil {
+				return err
+			}
+			return get_status(cfg.addrport(address), cfg.timeout)
+		},
+	}
+}
+
+// mode_command builds a subcommand that sends one mode-switch command
+// to the clock at the given address argument
+func mode_command(cfg *clockConfig, name string, command string, help string) *ffcli.Command {
+	return &ffcli.Command{
+		Name:       name,
+		ShortUsage: "ctm " + name + " [flags] <address>",
+		ShortHelp:  help,
+		FlagSet:    command_flagset(cfg, name),
+		Exec: func(_ context.Context, args []string) error {
+			address, err := require_address(name, args)
+			if err != nil {
+				return err
+			}
+			return send_command(cfg.addrport(address), cfg.timeout, command)
+		},
+	}
+}
+
+// up_set_time_command builds the subcommand that sets the uptimer time
+func up_set_time_command(cfg *clockConfig) *ffcli.Command {
+	return &ffcli.Command{
+		Name:       "up_set_time",
+		ShortUsage: "ctm up_set_time [flags] <address> H:M:S:tenths:hundredths",
+		ShortHelp:  "set the uptimer to H:M:S:tenths:hundredths (smaller units optional)",
+		FlagSet:    command_flagset(cfg, "up_set_time"),
+		Exec: func(_ context.Context, args []string) error {
+			if len(args) != 2 {
+				return fmt.Errorf("up_set_time requires exactly 2 arguments (clock address and H:M:S time), got %d", len(args))
+			}
+			return send_set_command(cfg.addrport(args[0]), cfg.timeout, "up_set_time", args[1])
+		},
+	}
+}
+
 func main() {
-	if len(os.Args) < 3 {
-		fmt.Println("expected arguments of subcommand and address")
-		os.Exit(1)
+	var config clockConfig
+
+	root_flags := flag.NewFlagSet("ctm", flag.ExitOnError)
+	config.register(root_flags)
+
+	root := &ffcli.Command{
+		Name:       "ctm",
+		ShortUsage: "ctm [flags] <subcommand> [flags] <address> ...",
+		ShortHelp:  "control Time Machines Corp. network clocks over UDP",
+		FlagSet:    root_flags,
+		Subcommands: []*ffcli.Command{
+			status_command(&config),
+			mode_command(&config, "time", "time_mode", "put the clock into time display mode"),
+			mode_command(&config, "up_ms", "up_mode_ms", "put the uptimer in minutes:seconds mode"),
+			mode_command(&config, "up_hms", "up_mode_hms", "put the uptimer in hours:minutes:seconds mode"),
+			mode_command(&config, "up_run", "up_mode_run", "run the uptimer"),
+			mode_command(&config, "up_pause", "up_mode_pause", "pause the uptimer"),
+			mode_command(&config, "up_reset_ms", "up_reset_ms", "reset the uptimer in minutes:seconds mode"),
+			mode_command(&config, "up_reset_hms", "up_reset_hms", "reset the uptimer in hours:minutes:seconds mode"),
+			up_set_time_command(&config),
+		},
+		Exec: func(_ context.Context, args []string) error {
+			if len(args) > 0 {
+				return fmt.Errorf("unknown subcommand %q (run 'ctm help' to see the subcommands)", args[0])
+			}
+			return flag.ErrHelp
+		},
 	}
 
-	clock_address := os.Args[2]
-	clock_addrport := clock_address + ":7372"
+	root.Subcommands = append(root.Subcommands, &ffcli.Command{
+		Name:       "help",
+		ShortUsage: "ctm help",
+		ShortHelp:  "show help for ctm",
+		FlagSet:    flag.NewFlagSet("help", flag.ExitOnError),
+		Exec: func(_ context.Context, _ []string) error {
+			fmt.Print(ffcli.DefaultUsageFunc(root))
+			return nil
+		},
+	})
 
-	err := func() error {
-		switch os.Args[1] {
-		case "status":
-			return get_status(clock_addrport)
-		case "time":
-			return send_command(clock_addrport, "time_mode")
-		case "up_ms":
-			return send_command(clock_addrport, "up_mode_ms")
-		case "up_hms":
-			return send_command(clock_addrport, "up_mode_hms")
-		case "up_run":
-			return send_command(clock_addrport, "up_mode_run")
-		case "up_pause":
-			return send_command(clock_addrport, "up_mode_pause")
-		case "up_reset_ms":
-			return send_command(clock_addrport, "up_reset_ms")
-		case "up_reset_hms":
-			return send_command(clock_addrport, "up_reset_hms")
-		case "up_set_time":
-			set_time := os.Args[3]
-			return send_set_command(clock_addrport, "up_set_time", set_time) // but don't be upset :)
-		default:
-			return fmt.Errorf("undefined subcommand: %s", os.Args[1])
-		}
-	}()
+	err := root.ParseAndRun(context.Background(), os.Args[1:])
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "ctm: %v\n", err)
+		if !errors.Is(err, flag.ErrHelp) {
+			fmt.Fprintf(os.Stderr, "ctm: %v\n", err)
+		}
 		os.Exit(1)
 	}
 }

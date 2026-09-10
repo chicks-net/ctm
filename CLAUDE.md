@@ -19,7 +19,12 @@ go fmt .      # format code
 ```
 
 Module path is `github.com/chicks-net/ctm`, pinned to Go 1.25 (`go.mod`).
-No external dependencies — standard library only.
+One external dependency: `github.com/peterbourgon/ff/v3` (Apache-2.0, zero
+transitive deps) — used for the `ffcli` subcommand tree; taken on for
+issue #16 because it wraps stdlib `flag.FlagSet` with a small API surface
+(help/usage generation, subcommand dispatch) without the weight of
+cobra/urfave.  Flag parsing is flags-first: `-timeout` and `-port` may
+appear before or after the subcommand, but must precede positional args.
 
 The root `justfile` imports recipe modules from `.just/`:
 `compliance.just`, `gh-process.just` (PR lifecycle), `pr-hook.just`,
@@ -38,20 +43,29 @@ are skipped, never clobbered).
 ## Usage
 
 ```sh
-ctm $SUBCOMMAND $CLOCK_IP
+ctm [flags] $SUBCOMMAND [flags] $CLOCK_IP
 ```
 
 Subcommands: `status`, `time`, `up_ms`, `up_hms`, `up_run`, `up_pause`, `up_reset_ms`, `up_reset_hms`,
 `up_set_time H:M:S:tenths:hundredths` (trailing components optional, but leading zeros required, e.g. `0:30`).
 
+Global flags (may appear before or after the subcommand, but must precede
+positional args): `-timeout duration` (default `2s`) and `-port` (default `7372`).
+`ctm help`, `ctm -h`, and `ctm $SUBCOMMAND -h` print usage.
+
 ## Architecture
 
 Everything lives in `main.go`. The code is organized around:
 
+- **`ffcli` command tree** — `main()` builds a root `ffcli.Command` with one subcommand per verb;
+  `mode_command` is the shared builder for simple mode switches, `status_command` and `up_set_time_command`
+  wrap their bespoke logic
+- **`clockConfig`** — shared `-timeout`/`-port` flag values, registered on the root and every
+  subcommand flag set so flags work in either position; `addrport` joins host and port
 - **`locator_commands` map** — string subcommand names to hex command bytes
-- **`get_status(address)`** — sends a status query, decodes and prints the response
-- **`send_command(address, command)`** — sends a simple mode-switch command, expects an ACK
-- **`send_set_command(address, command, time)`** — sends a `SetTimer` struct for `up_set_time`
+- **`get_status(address, timeout)`** — sends a status query, decodes and prints the response
+- **`send_command(address, timeout, command)`** — sends a simple mode-switch command, expects an ACK
+- **`send_set_command(address, timeout, command, time)`** — sends a `SetTimer` struct for `up_set_time`
 - **`extract_time_part(time, part)`** — parses a colon-delimited time string by index
 
 Wire format structs (all use `encoding/binary` with big-endian):
@@ -65,4 +79,4 @@ Wire format structs (all use `encoding/binary` with big-endian):
 
 - API 2.0 features return a "not implemented" error if encountered: downtimers, dotmatrix text, relay, dimmer, RGB color, exec stored program
 - Downtimer subcommands (`down_run`, `down_pause`, `down_set_time`) not yet implemented (tracked: [issue #3](https://github.com/chicks-net/ctm/issues/3))
-- UDP reads have a 2-second deadline (`udpTimeout` in `main.go`); a silent clock exits with an error instead of hanging. An overridable `-timeout` flag is future work (tracked: [issue #16](https://github.com/chicks-net/ctm/issues/16))
+- UDP reads wait up to `-timeout` (default 2s); a silent clock exits with an error instead of hanging
