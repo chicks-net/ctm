@@ -1,15 +1,16 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/binary"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"net"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type IPAddr [4]byte
@@ -66,6 +67,8 @@ type SetTimer struct {
 
 const maxBufferSize = 48 // the biggest response packet is 40 bytes
 
+const udpTimeout = 2 * time.Second // how long to wait for a clock to respond
+
 var (
 	locator_commands = make(map[string]string)
 )
@@ -90,11 +93,26 @@ func (ip IPAddr) String() string {
 	return fmt.Sprintf("%v.%v.%v.%v", int(ip[0]), int(ip[1]), int(ip[2]), int(ip[3]))
 }
 
-// dial the clock, leaving deadline management to the caller
+// convert a failed clock read into a clear error, calling out the
+// timeout case so a silent clock is not mistaken for a crash
+func read_error(address string, err error) error {
+	if errors.Is(err, os.ErrDeadlineExceeded) {
+		return fmt.Errorf("clock at %s did not respond (timeout after %s)", address, udpTimeout)
+	}
+	return fmt.Errorf("reading response from %s: %w", address, err)
+}
+
+// dial the clock and arm a read deadline so a silent clock cannot
+// block the caller forever
 func dial_clock(address string) (net.Conn, error) {
 	conn, err := net.Dial("udp", address)
 	if err != nil {
 		return nil, fmt.Errorf("connecting to %s: %w", address, err)
+	}
+	err = conn.SetReadDeadline(time.Now().Add(udpTimeout))
+	if err != nil {
+		conn.Close()
+		return nil, fmt.Errorf("setting read deadline on %s: %w", address, err)
 	}
 	return conn, nil
 }
@@ -114,7 +132,7 @@ func get_status(address string) error {
 	fmt.Printf("sent status query to %s\n", address)
 
 	udp_resp := make([]byte, maxBufferSize) // buffer for UDP responses
-	packet_size, err := bufio.NewReader(conn).Read(udp_resp)
+	packet_size, err := conn.Read(udp_resp)
 	if err == nil {
 		fmt.Println("response hexdump:")
 		fmt.Printf("%s", hex.Dump(udp_resp))
@@ -146,7 +164,7 @@ func get_status(address string) error {
 			return fmt.Errorf("unexpected number of bytes returned so we don't know which protocol it is talking")
 		}
 	} else {
-		return fmt.Errorf("reading response from %s: %w", address, err)
+		return read_error(address, err)
 	}
 	return nil
 }
@@ -165,7 +183,7 @@ func send_command(address string, command string) error {
 	fmt.Printf("sent command %s to %s\n", command, address)
 
 	udp_resp := make([]byte, maxBufferSize) // buffer for UDP responses
-	packet_size, err := bufio.NewReader(conn).Read(udp_resp)
+	packet_size, err := conn.Read(udp_resp)
 	if err == nil {
 		if packet_size != 2 {
 			fmt.Printf("packet length %d\n", packet_size)
@@ -178,7 +196,7 @@ func send_command(address string, command string) error {
 		}
 		fmt.Println("acked by clock")
 	} else {
-		return fmt.Errorf("reading response from %s: %w", address, err)
+		return read_error(address, err)
 	}
 	return nil
 }
@@ -243,7 +261,7 @@ func send_set_command(address string, command string, time string) error {
 	fmt.Printf("sent command %s to %s (%d bytes)\n", command, address, length)
 
 	udp_resp := make([]byte, maxBufferSize) // buffer for UDP responses
-	packet_size, err := bufio.NewReader(conn).Read(udp_resp)
+	packet_size, err := conn.Read(udp_resp)
 	if err == nil {
 		if packet_size != 2 {
 			fmt.Printf("packet length %d\n", packet_size)
@@ -256,7 +274,7 @@ func send_set_command(address string, command string, time string) error {
 		}
 		fmt.Println("acked by clock")
 	} else {
-		return fmt.Errorf("reading response from %s: %w", address, err)
+		return read_error(address, err)
 	}
 	return nil
 }
