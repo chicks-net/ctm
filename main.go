@@ -52,8 +52,9 @@ type Response20 struct {
 	NTPSyncCnt  uint16
 	DisplayTime Time20
 	DisplayMode uint8
-	Downtimer   uint8
-	Unused      [2]uint8
+	DownAlarm   uint8
+	Days        uint8
+	Digits      uint8
 	WifiSignal  uint8
 	DeviceName  [16]uint8
 }
@@ -144,6 +145,44 @@ func dial_clock(address string, timeout time.Duration) (net.Conn, error) {
 	return conn, nil
 }
 
+// display_mode_string turns an API 2.0 display-mode byte into a
+// human-readable description: the low 3 bits pick the mode (time,
+// up timer, down timer, interval counters), bit 6 (0x40) says
+// whether the timer is running and bits 7/5 (0x80/0x20) pick the
+// display format
+func display_mode_string(mode uint8) string {
+	var name string
+	switch mode & 0x07 {
+	case 0:
+		return "time"
+	case 1:
+		name = "up timer"
+	case 2:
+		name = "down timer"
+	case 3:
+		name = "interval count up"
+	case 4:
+		name = "interval count down"
+	default:
+		name = fmt.Sprintf("unknown (0x%02x)", mode&0x07)
+	}
+
+	parts := []string{name}
+	if mode&0x40 == 0x40 {
+		parts = append(parts, "running")
+	} else {
+		parts = append(parts, "stopped")
+	}
+	if mode&0x80 == 0x80 {
+		parts = append(parts, "M:S.Tenths")
+	} else if mode&0x20 == 0x20 {
+		parts = append(parts, "D:H:M")
+	} else {
+		parts = append(parts, "H:M:S")
+	}
+	return strings.Join(parts, ", ")
+}
+
 // functions that talk to the clock
 func get_status(address string, timeout time.Duration) error {
 	conn, err := dial_clock(address, timeout)
@@ -184,8 +223,45 @@ func get_status(address string, timeout time.Duration) error {
 		} else if packet_size == 40 {
 			// API version 2.0
 			fmt.Printf("packet length %d (API version 2.0)\n", packet_size)
+			struct_resp := Response20{}
+			buf := bytes.NewReader(udp_resp)
+			err = binary.Read(buf, binary.BigEndian, &struct_resp)
+			if err != nil {
+				return fmt.Errorf("decoding %d-byte response as API 2.0: %w", packet_size, err)
+			}
 
-			return fmt.Errorf("API 2.0 status decoding is not implemented yet")
+			fmt.Printf("Type %x\n", struct_resp.DeviceType)
+			fmt.Printf("IP %v\n", struct_resp.ClientIP)
+			fmt.Printf("MAC %x\n", struct_resp.MAC_address)
+			fmt.Printf("Ver %x\n", struct_resp.FirmwareVer)
+			fmt.Printf("Syncs %d\n", struct_resp.NTPSyncCnt)
+			fmt.Printf("Time %d:%d:%d.%d\n", struct_resp.DisplayTime.Hour,
+				struct_resp.DisplayTime.Minute,
+				struct_resp.DisplayTime.Second,
+				struct_resp.DisplayTime.Tenths)
+			fmt.Printf("Mode %s\n", display_mode_string(struct_resp.DisplayMode))
+			if struct_resp.DownAlarm&0x80 == 0x80 {
+				fmt.Printf("Down alarm on (%d seconds)\n", struct_resp.DownAlarm&0x7f)
+			} else {
+				fmt.Println("Down alarm off")
+			}
+			fmt.Printf("Days %d\n", uint16(struct_resp.Days)<<3|uint16(struct_resp.Digits>>5))
+			switch struct_resp.Digits & 0x1f {
+			case 0:
+				fmt.Println("Digits 4/6")
+			case 1:
+				fmt.Println("Digits (D):H:M:S")
+			case 2:
+				fmt.Println("Digits (H):M:S.Tenths")
+			default:
+				fmt.Printf("Digits unknown (%d)\n", struct_resp.Digits&0x1f)
+			}
+			if struct_resp.WifiSignal == 0 {
+				fmt.Println("Wifi wired")
+			} else {
+				fmt.Printf("Wifi -%d dBm\n", struct_resp.WifiSignal)
+			}
+			fmt.Printf("Name %s\n", struct_resp.DeviceName)
 		} else {
 			fmt.Printf("packet length %d\n", packet_size)
 			return fmt.Errorf("unexpected number of bytes returned so we don't know which protocol it is talking")
@@ -244,7 +320,7 @@ func extract_time_part(time string, part int) (uint8, error) {
 func send_set_command(address string, timeout time.Duration, command string, time_string string) error {
 	var err error
 	set_struct := SetTimer{}
-	set_struct.Command = uint8(locator_commands["up_set_time"][0])
+	set_struct.Command = uint8(locator_commands[command][0])
 
 	set_struct.Hour, err = extract_time_part(time_string, 0)
 	if err != nil {
@@ -360,18 +436,19 @@ func mode_command(cfg *clockConfig, name string, command string, help string) *f
 	}
 }
 
-// up_set_time_command builds the subcommand that sets the uptimer time
-func up_set_time_command(cfg *clockConfig) *ffcli.Command {
+// set_time_command builds a subcommand that sends a SetTimer struct
+// for the named timer command (up_set_time or down_set_time)
+func set_time_command(cfg *clockConfig, name string, command string, help string) *ffcli.Command {
 	return &ffcli.Command{
-		Name:       "up_set_time",
-		ShortUsage: "ctm up_set_time [flags] <address> H:M:S:tenths:hundredths",
-		ShortHelp:  "set the uptimer to H:M:S:tenths:hundredths (smaller units optional)",
-		FlagSet:    command_flagset(cfg, "up_set_time"),
+		Name:       name,
+		ShortUsage: "ctm " + name + " [flags] <address> H:M:S:tenths:hundredths",
+		ShortHelp:  help,
+		FlagSet:    command_flagset(cfg, name),
 		Exec: func(_ context.Context, args []string) error {
 			if len(args) != 2 {
-				return fmt.Errorf("up_set_time requires exactly 2 arguments (clock address and H:M:S time), got %d", len(args))
+				return fmt.Errorf("%s requires exactly 2 arguments (clock address and H:M:S time), got %d", name, len(args))
 			}
-			return send_set_command(cfg.addrport(args[0]), cfg.timeout, "up_set_time", args[1])
+			return send_set_command(cfg.addrport(args[0]), cfg.timeout, command, args[1])
 		},
 	}
 }
@@ -396,7 +473,10 @@ func main() {
 			mode_command(&config, "up_pause", "up_mode_pause", "pause the uptimer"),
 			mode_command(&config, "up_reset_ms", "up_reset_ms", "reset the uptimer in minutes:seconds mode"),
 			mode_command(&config, "up_reset_hms", "up_reset_hms", "reset the uptimer in hours:minutes:seconds mode"),
-			up_set_time_command(&config),
+			set_time_command(&config, "up_set_time", "up_set_time", "set the uptimer to H:M:S:tenths:hundredths (smaller units optional)"),
+			mode_command(&config, "down_run", "down_mode_run", "run the downtimer"),
+			mode_command(&config, "down_pause", "down_mode_pause", "pause the downtimer"),
+			set_time_command(&config, "down_set_time", "down_set_time", "set the downtimer to H:M:S:tenths:hundredths (smaller units optional)"),
 		},
 		Exec: func(_ context.Context, args []string) error {
 			if len(args) > 0 {
