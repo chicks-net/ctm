@@ -86,8 +86,6 @@ acked by clock
 
 ## Known bugs
 
-- There is no timeout yet so you will need to hit <kbd>Ctrl</kbd>-<kbd>C</kbd>
-  to exit if you put in an invalid host or IP.
 - Unimplemented:
   - downtimers - doable but not coded yet (issue #3)
   - setting dotmatrix text - I don't have a device to test this with yet.

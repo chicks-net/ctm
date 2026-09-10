@@ -63,6 +63,6 @@ Wire format structs (all use `encoding/binary` with big-endian):
 
 ## Known Gaps
 
-- No UDP timeout — invalid hosts require Ctrl-C to exit (tracked: [issue #2](https://github.com/chicks-net/ctm/issues/2))
-- API 2.0 features panic if encountered: downtimers, dotmatrix text, relay, dimmer, RGB color, exec stored program
+- API 2.0 features return a "not implemented" error if encountered: downtimers, dotmatrix text, relay, dimmer, RGB color, exec stored program
 - Downtimer subcommands (`down_run`, `down_pause`, `down_set_time`) not yet implemented (tracked: [issue #3](https://github.com/chicks-net/ctm/issues/3))
+- UDP reads have a 2-second deadline (`udpTimeout` in `main.go`); a silent clock exits with an error instead of hanging. An overridable `-timeout` flag is future work (tracked: [issue #16](https://github.com/chicks-net/ctm/issues/16))
