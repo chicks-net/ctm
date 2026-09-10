@@ -20,6 +20,16 @@ this was written.
 
 ## Security Risks
 
-We are unaware of any security risks particular to this software that you
-should be aware of.  Please let us know if we missed anything or forgot to
-update this section in too long.
+This tool talks to Time Machines Corporation clocks over UDP port 7372,
+which is a protocol with no authentication or encryption.  Be aware of:
+
+- Anyone on the network can send the same commands — the clock firmware
+  accepts them from any source, so timers can be run, paused, or reset by
+  anyone who can reach the device.
+- Traffic is cleartext UDP, so commands and responses (including device
+  name and MAC address) can be observed on the network.
+- `ctm` does not verify that a response actually came from the intended
+  clock, so a spoofer could feed it crafted (though harmless) output.
+
+The practical mitigation is running `ctm` only on trusted, controlled
+networks — which is how these clocks are normally deployed.
