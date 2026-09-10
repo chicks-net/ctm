@@ -104,10 +104,12 @@ func (ip IPAddr) String() string {
 // clockConfig holds the shared command-line settings that every
 // subcommand accepts.  The same config is bound to the root flag set and
 // to every subcommand flag set, so -timeout and -port may be spelled
-// either before or after the subcommand name.
+// either before or after the subcommand name.  dial exists for tests,
+// which swap it for a fake; production code leaves it nil.
 type clockConfig struct {
 	timeout time.Duration
 	port    int
+	dial    dialer
 }
 
 // register binds the shared -timeout and -port flags onto a flag set
@@ -129,6 +131,10 @@ func read_error(address string, timeout time.Duration, err error) error {
 	}
 	return fmt.Errorf("reading response from %s: %w", address, err)
 }
+
+// dialer is the seam the tests use to stand in for real clock
+// connections: production code passes dial_clock, tests pass a fake
+type dialer func(address string, timeout time.Duration) (net.Conn, error)
 
 // dial the clock and arm a read deadline so a silent clock cannot
 // block the caller forever
@@ -183,9 +189,18 @@ func display_mode_string(mode uint8) string {
 	return strings.Join(parts, ", ")
 }
 
+// dial_clock_or_test dials with the config's dialer when a test has
+// installed one, and with the real dialer otherwise
+func (c *clockConfig) dial_clock_or_test(address string, timeout time.Duration) (net.Conn, error) {
+	if c.dial != nil {
+		return c.dial(address, timeout)
+	}
+	return dial_clock(address, timeout)
+}
+
 // functions that talk to the clock
-func get_status(address string, timeout time.Duration) error {
-	conn, err := dial_clock(address, timeout)
+func get_status(dial dialer, address string, timeout time.Duration) error {
+	conn, err := dial(address, timeout)
 	if err != nil {
 		return err
 	}
@@ -201,7 +216,7 @@ func get_status(address string, timeout time.Duration) error {
 	packet_size, err := conn.Read(udp_resp)
 	if err == nil {
 		fmt.Println("response hexdump:")
-		fmt.Printf("%s", hex.Dump(udp_resp))
+		fmt.Printf("%s", hex.Dump(udp_resp[:packet_size]))
 
 		if packet_size == 35 {
 			// API version 1.x
@@ -272,8 +287,8 @@ func get_status(address string, timeout time.Duration) error {
 	return nil
 }
 
-func send_command(address string, timeout time.Duration, command string) error {
-	conn, err := dial_clock(address, timeout)
+func send_command(dial dialer, address string, timeout time.Duration, command string) error {
+	conn, err := dial(address, timeout)
 	if err != nil {
 		return err
 	}
@@ -294,7 +309,7 @@ func send_command(address string, timeout time.Duration, command string) error {
 		}
 		if string(udp_resp[0]) != "A" {
 			fmt.Println("response hexdump:")
-			fmt.Printf("%s", hex.Dump(udp_resp))
+			fmt.Printf("%s", hex.Dump(udp_resp[:packet_size]))
 			return fmt.Errorf("response does not look like an acknowldgement")
 		}
 		fmt.Println("acked by clock")
@@ -312,12 +327,15 @@ func extract_time_part(time string, part int) (uint8, error) {
 		if err != nil {
 			return 0, fmt.Errorf("parsing %q as a time component: %w", time_components[part], err)
 		}
+		if intVar < 0 || intVar > 255 {
+			return 0, fmt.Errorf("time component %q out of range (must be 0-255)", time_components[part])
+		}
 		return uint8(intVar), nil
 	}
 	return uint8(0), nil
 }
 
-func send_set_command(address string, timeout time.Duration, command string, time_string string) error {
+func send_set_command(dial dialer, address string, timeout time.Duration, command string, time_string string) error {
 	var err error
 	set_struct := SetTimer{}
 	set_struct.Command = uint8(locator_commands[command][0])
@@ -345,7 +363,7 @@ func send_set_command(address string, timeout time.Duration, command string, tim
 
 	fmt.Println(set_struct)
 
-	conn, err := dial_clock(address, timeout)
+	conn, err := dial(address, timeout)
 	if err != nil {
 		return err
 	}
@@ -372,7 +390,7 @@ func send_set_command(address string, timeout time.Duration, command string, tim
 		}
 		if string(udp_resp[0]) != "A" {
 			fmt.Println("response hexdump:")
-			fmt.Printf("%s", hex.Dump(udp_resp))
+			fmt.Printf("%s", hex.Dump(udp_resp[:packet_size]))
 			return fmt.Errorf("response does not look like an acknowldgement")
 		}
 		fmt.Println("acked by clock")
@@ -413,7 +431,7 @@ func status_command(cfg *clockConfig) *ffcli.Command {
 			if err != nil {
 				return err
 			}
-			return get_status(cfg.addrport(address), cfg.timeout)
+			return get_status(cfg.dial_clock_or_test, cfg.addrport(address), cfg.timeout)
 		},
 	}
 }
@@ -431,7 +449,7 @@ func mode_command(cfg *clockConfig, name string, command string, help string) *f
 			if err != nil {
 				return err
 			}
-			return send_command(cfg.addrport(address), cfg.timeout, command)
+			return send_command(cfg.dial_clock_or_test, cfg.addrport(address), cfg.timeout, command)
 		},
 	}
 }
@@ -448,14 +466,15 @@ func set_time_command(cfg *clockConfig, name string, command string, help string
 			if len(args) != 2 {
 				return fmt.Errorf("%s requires exactly 2 arguments (clock address and H:M:S time), got %d", name, len(args))
 			}
-			return send_set_command(cfg.addrport(args[0]), cfg.timeout, command, args[1])
+			return send_set_command(cfg.dial_clock_or_test, cfg.addrport(args[0]), cfg.timeout, command, args[1])
 		},
 	}
 }
 
-func main() {
-	var config clockConfig
-
+// new_command_tree builds the full ctm command tree around the given
+// config.  main() and the tests share this so the dispatch logic is
+// exercised exactly as shipped.
+func new_command_tree(config *clockConfig) *ffcli.Command {
 	root_flags := flag.NewFlagSet("ctm", flag.ExitOnError)
 	config.register(root_flags)
 
@@ -465,18 +484,18 @@ func main() {
 		ShortHelp:  "control Time Machines Corp. network clocks over UDP",
 		FlagSet:    root_flags,
 		Subcommands: []*ffcli.Command{
-			status_command(&config),
-			mode_command(&config, "time", "time_mode", "put the clock into time display mode"),
-			mode_command(&config, "up_ms", "up_mode_ms", "put the uptimer in minutes:seconds mode"),
-			mode_command(&config, "up_hms", "up_mode_hms", "put the uptimer in hours:minutes:seconds mode"),
-			mode_command(&config, "up_run", "up_mode_run", "run the uptimer"),
-			mode_command(&config, "up_pause", "up_mode_pause", "pause the uptimer"),
-			mode_command(&config, "up_reset_ms", "up_reset_ms", "reset the uptimer in minutes:seconds mode"),
-			mode_command(&config, "up_reset_hms", "up_reset_hms", "reset the uptimer in hours:minutes:seconds mode"),
-			set_time_command(&config, "up_set_time", "up_set_time", "set the uptimer to H:M:S:tenths:hundredths (smaller units optional)"),
-			mode_command(&config, "down_run", "down_mode_run", "run the downtimer"),
-			mode_command(&config, "down_pause", "down_mode_pause", "pause the downtimer"),
-			set_time_command(&config, "down_set_time", "down_set_time", "set the downtimer to H:M:S:tenths:hundredths (smaller units optional)"),
+			status_command(config),
+			mode_command(config, "time", "time_mode", "put the clock into time display mode"),
+			mode_command(config, "up_ms", "up_mode_ms", "put the uptimer in minutes:seconds mode"),
+			mode_command(config, "up_hms", "up_mode_hms", "put the uptimer in hours:minutes:seconds mode"),
+			mode_command(config, "up_run", "up_mode_run", "run the uptimer"),
+			mode_command(config, "up_pause", "up_mode_pause", "pause the uptimer"),
+			mode_command(config, "up_reset_ms", "up_reset_ms", "reset the uptimer in minutes:seconds mode"),
+			mode_command(config, "up_reset_hms", "up_reset_hms", "reset the uptimer in hours:minutes:seconds mode"),
+			set_time_command(config, "up_set_time", "up_set_time", "set the uptimer to H:M:S:tenths:hundredths (smaller units optional)"),
+			mode_command(config, "down_run", "down_mode_run", "run the downtimer"),
+			mode_command(config, "down_pause", "down_mode_pause", "pause the downtimer"),
+			set_time_command(config, "down_set_time", "down_set_time", "set the downtimer to H:M:S:tenths:hundredths (smaller units optional)"),
 		},
 		Exec: func(_ context.Context, args []string) error {
 			if len(args) > 0 {
@@ -496,6 +515,14 @@ func main() {
 			return nil
 		},
 	})
+
+	return root
+}
+
+func main() {
+	var config clockConfig
+
+	root := new_command_tree(&config)
 
 	err := root.ParseAndRun(context.Background(), os.Args[1:])
 	if err != nil {
