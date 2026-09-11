@@ -96,6 +96,11 @@ release-upload rel_version:
     #!/usr/bin/env bash
     set -euo pipefail
 
+    # shellcheck disable=SC2050  # rel_version is a variable
+    if [[ ! "{{rel_version}}" =~ ^v[0-9] ]]; then
+        echo "{{RED}}Error: Release version must start with 'v' followed by a digit (e.g., v1.0.0, v2.3.4){{NORMAL}}" >&2
+        exit 1
+    fi
     cd dist
     shopt -s nullglob
     assets=(ctm-*)
@@ -111,6 +116,11 @@ release-notes rel_version:
     #!/usr/bin/env bash
     set -euo pipefail
 
+    # shellcheck disable=SC2050  # rel_version is a variable
+    if [[ ! "{{rel_version}}" =~ ^v[0-9] ]]; then
+        echo "{{RED}}Error: Release version must start with 'v' followed by a digit (e.g., v1.0.0, v2.3.4){{NORMAL}}" >&2
+        exit 1
+    fi
     BODY_FILE="$(mktemp)"
     trap 'rm -f "$BODY_FILE"' EXIT
     gh release view "{{rel_version}}" --json body --jq .body > "$BODY_FILE"
@@ -143,6 +153,11 @@ release-check rel_version:
     #!/usr/bin/env bash
     set -euo pipefail
 
+    # shellcheck disable=SC2050  # rel_version is a variable
+    if [[ ! "{{rel_version}}" =~ ^v[0-9] ]]; then
+        echo "{{RED}}Error: Release version must start with 'v' followed by a digit (e.g., v1.0.0, v2.3.4){{NORMAL}}" >&2
+        exit 1
+    fi
     EXPECTED_ASSETS=0
     # shellcheck disable=SC2043,SC1083,SC2034  # {{release_platforms}} is a just variable, expanded before shellcheck sees it
     for platform in {{release_platforms}}; do
