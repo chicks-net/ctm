@@ -5,12 +5,20 @@ on:
     tags:
       - 'v*'
 
+# a re-pushed tag cancels the in-flight run so two runs never race
+# on the same release's assets (e.g. two multiple.intoto.jsonl uploads)
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
 # global permissions
 permissions: {}
 
 jobs:
   release:
     runs-on: ubuntu-latest
+    # hung gh/cosign/network calls shouldn't ride out the 6h default cap
+    timeout-minutes: 20
     permissions:
       contents: write
       id-token: write

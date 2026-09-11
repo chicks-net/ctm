@@ -97,8 +97,8 @@ release-upload rel_version:
     set -euo pipefail
 
     # shellcheck disable=SC2050  # rel_version is a variable
-    if [[ ! "{{rel_version}}" =~ ^v[0-9] ]]; then
-        echo "{{RED}}Error: Release version must start with 'v' followed by a digit (e.g., v1.0.0, v2.3.4){{NORMAL}}" >&2
+    if [[ ! "{{rel_version}}" =~ ^v[0-9]+(\.[0-9]+){0,2}$ ]]; then
+        echo "{{RED}}Error: Release version must be vN[.N[.N]] (e.g. v1, v0.2, v2.3.4){{NORMAL}}" >&2
         exit 1
     fi
     cd dist
@@ -117,14 +117,16 @@ release-notes rel_version:
     set -euo pipefail
 
     # shellcheck disable=SC2050  # rel_version is a variable
-    if [[ ! "{{rel_version}}" =~ ^v[0-9] ]]; then
-        echo "{{RED}}Error: Release version must start with 'v' followed by a digit (e.g., v1.0.0, v2.3.4){{NORMAL}}" >&2
+    if [[ ! "{{rel_version}}" =~ ^v[0-9]+(\.[0-9]+){0,2}$ ]]; then
+        echo "{{RED}}Error: Release version must be vN[.N[.N]] (e.g. v1, v0.2, v2.3.4){{NORMAL}}" >&2
         exit 1
     fi
     BODY_FILE="$(mktemp)"
     trap 'rm -f "$BODY_FILE"' EXIT
     gh release view "{{rel_version}}" --json body --jq .body > "$BODY_FILE"
 
+    # indentation is intentional: just dedents recipe bodies, so this EOF
+    # lines up at column 0 for bash
     cat >> "$BODY_FILE" <<'EOF'
 
     ## Verifying the binaries
@@ -154,8 +156,8 @@ release-check rel_version:
     set -euo pipefail
 
     # shellcheck disable=SC2050  # rel_version is a variable
-    if [[ ! "{{rel_version}}" =~ ^v[0-9] ]]; then
-        echo "{{RED}}Error: Release version must start with 'v' followed by a digit (e.g., v1.0.0, v2.3.4){{NORMAL}}" >&2
+    if [[ ! "{{rel_version}}" =~ ^v[0-9]+(\.[0-9]+){0,2}$ ]]; then
+        echo "{{RED}}Error: Release version must be vN[.N[.N]] (e.g. v1, v0.2, v2.3.4){{NORMAL}}" >&2
         exit 1
     fi
     EXPECTED_ASSETS=0
