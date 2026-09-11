@@ -48,6 +48,12 @@ jobs:
         with:
           just-version: '1.58'
 
+      # fail fast on a tag shape the recipes reject (e.g. v1.2.3-rc1) so the
+      # run dies here instead of after build/attest/sign, which would leave
+      # dangling attestations for a tag that never gets release assets
+      - name: Validate release tag
+        run: just release-validate "${GITHUB_REF#refs/tags/}"
+
       - name: Build cross-platform binaries
         run: just release-build
 
