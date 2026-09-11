@@ -35,6 +35,9 @@ local-test: build
 # release build platforms (goos-goarch pairs matching gh-observer release.yml)
 release_platforms := "darwin-amd64 darwin-arm64 freebsd-386 freebsd-amd64 freebsd-arm64 linux-386 linux-amd64 linux-arm linux-arm64 windows-386 windows-amd64 windows-arm64"
 
+# release version format (single-sourced so all release recipes validate alike)
+release_version_regex := '^v[0-9]+(\.[0-9]+){0,2}$'
+
 # build cross-platform release binaries into dist/ as ctm-<goos>-<goarch>[.exe]
 [group('Release')]
 release-build:
@@ -97,7 +100,7 @@ release-upload rel_version:
     set -euo pipefail
 
     # shellcheck disable=SC2050  # rel_version is a variable
-    if [[ ! "{{rel_version}}" =~ ^v[0-9]+(\.[0-9]+){0,2}$ ]]; then
+    if [[ ! "{{rel_version}}" =~ {{release_version_regex}} ]]; then
         echo "{{RED}}Error: Release version must be vN[.N[.N]] (e.g. v1, v0.2, v2.3.4){{NORMAL}}" >&2
         exit 1
     fi
@@ -117,7 +120,7 @@ release-notes rel_version:
     set -euo pipefail
 
     # shellcheck disable=SC2050  # rel_version is a variable
-    if [[ ! "{{rel_version}}" =~ ^v[0-9]+(\.[0-9]+){0,2}$ ]]; then
+    if [[ ! "{{rel_version}}" =~ {{release_version_regex}} ]]; then
         echo "{{RED}}Error: Release version must be vN[.N[.N]] (e.g. v1, v0.2, v2.3.4){{NORMAL}}" >&2
         exit 1
     fi
@@ -156,7 +159,7 @@ release-check rel_version:
     set -euo pipefail
 
     # shellcheck disable=SC2050  # rel_version is a variable
-    if [[ ! "{{rel_version}}" =~ ^v[0-9]+(\.[0-9]+){0,2}$ ]]; then
+    if [[ ! "{{rel_version}}" =~ {{release_version_regex}} ]]; then
         echo "{{RED}}Error: Release version must be vN[.N[.N]] (e.g. v1, v0.2, v2.3.4){{NORMAL}}" >&2
         exit 1
     fi
