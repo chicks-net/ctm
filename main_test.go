@@ -797,3 +797,127 @@ func TestDialClockBadAddress(t *testing.T) {
 		t.Errorf("error %q does not mention the connection failure", err)
 	}
 }
+
+// --- fuzz targets for the untrusted-input parsers ---
+//
+// These run their seed corpora as ordinary tests under `go test ./...`,
+// which is how the CI exercises them.  To actually fuzz (random inputs,
+// minimizing engine, corpus growth in testdata/fuzz/), run e.g.
+//
+//	go test -fuzz FuzzExtractTimePart -fuzztime 30s
+//
+// The targets exist partly for real hardening - every one of these
+// functions parses bytes that originate off the wire or off argv - and
+// partly so OpenSSF Scorecard's Fuzzing check detects the repo as
+// fuzzed (it looks for `func FuzzXxx(*testing.F)` in *_test.go files).
+
+// FuzzExtractTimePart feeds arbitrary strings and part indexes to the
+// time parser: no input may panic, and any parsed value must stay in
+// the 0-255 range a uint8 component can hold.  Negative part indexes
+// used to panic here - the guard in extractTimePart was added after
+// this target found it.
+func FuzzExtractTimePart(f *testing.F) {
+	seeds := []struct {
+		value string
+		part  int
+	}{
+		{"1:2:3:4:5", 0},
+		{"1:2:3:4:5", 4},
+		{"0:30", 1},
+		{"0:30", 2},
+		{"255:0:0", 0},
+		{"256:0:0", 0},
+		{"1:2:-1", 2},
+		{"1:2:x", 2},
+		{"", 0},
+		{"1:2:3:4:5", -1},
+		{"1:2:3:4:5", 99},
+	}
+	for _, s := range seeds {
+		f.Add(s.value, s.part)
+	}
+	f.Fuzz(func(t *testing.T, value string, part int) {
+		got, err := extractTimePart(value, part)
+		if err != nil {
+			// erroring is fine; a nonzero value alongside an
+			// error would mislead the caller
+			if got != 0 {
+				t.Fatalf("extractTimePart(%q, %d) = %d with error %v", value, part, got, err)
+			}
+			return
+		}
+		if got > 255 {
+			t.Fatalf("extractTimePart(%q, %d) = %d, want 0-255", value, part, got)
+		}
+	})
+}
+
+// FuzzParseColorSpec feeds arbitrary color specs to the parser: no
+// input may panic, and a successful parse must yield exactly the
+// MM:SS and HH triples the syntax describes
+func FuzzParseColorSpec(f *testing.F) {
+	for _, seed := range []string{
+		"ff0000",
+		"FFAA00",
+		"ff0000:00ff00",
+		"00ff00:ff0000",
+		"ff00",
+		"ff00000",
+		"gg0000",
+		"ff0000:00ff00:0000ff",
+		"ff0000:0",
+		"",
+	} {
+		f.Add(seed)
+	}
+	f.Fuzz(func(t *testing.T, spec string) {
+		mmss, hh, err := parseColorSpec(spec)
+		if err != nil {
+			return
+		}
+		// a single color must apply to both digit groups
+		if strings.Count(spec, ":") == 0 {
+			if mmss != hh {
+				t.Fatalf("parseColorSpec(%q) single color gave mmss %+v != hh %+v", spec, mmss, hh)
+			}
+		}
+	})
+}
+
+// FuzzDisplayModeString feeds arbitrary mode bytes to the display-mode
+// decoder; every byte is valid input for the real clock, so the only
+// invariant is that decoding never panics
+func FuzzDisplayModeString(f *testing.F) {
+	for _, seed := range []uint8{0x00, 0x01, 0x41, 0x02, 0x03, 0x04, 0x07, 0xC1, 0x61, 0xFF} {
+		f.Add(seed)
+	}
+	f.Fuzz(func(t *testing.T, mode uint8) {
+		_ = displayModeString(mode)
+	})
+}
+
+// FuzzStatusDecode feeds arbitrary byte packets to the API 1.x and 2.0
+// decoders, exercising the paths the status subcommand takes when a
+// clock (or something spoofing one) sends a malformed or hostile
+// response: a 35-byte packet must decode as API 1.x, a 40-byte one as
+// API 2.0, and neither may panic along the way
+func FuzzStatusDecode(f *testing.F) {
+	f.Add(r10Bytes())
+	f.Add(make([]byte, 40))
+	f.Add([]byte{})
+	f.Add(make([]byte, 37))
+	f.Fuzz(func(t *testing.T, packet []byte) {
+		switch len(packet) {
+		case api1PacketSize:
+			var r10 Response10
+			if err := binary.Read(bytes.NewReader(packet), binary.BigEndian, &r10); err != nil {
+				t.Fatalf("decoding %d-byte packet as API 1.x: %v", len(packet), err)
+			}
+		case api2PacketSize:
+			var r20 Response20
+			if err := binary.Read(bytes.NewReader(packet), binary.BigEndian, &r20); err != nil {
+				t.Fatalf("decoding %d-byte packet as API 2.0: %v", len(packet), err)
+			}
+		}
+	})
+}
