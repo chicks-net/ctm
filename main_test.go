@@ -85,6 +85,75 @@ func TestSetTimerWireFormat(t *testing.T) {
 	}
 }
 
+// TestSetColorWireFormat pins the 7-byte big-endian Color Set packet
+// from API 2.0 section 1.4.6: 0xB6, then the MM:SS digit color,
+// then the HH digit color
+func TestSetColorWireFormat(t *testing.T) {
+	color := SetColor{
+		Command: 0xb6,
+		MMSS:    [3]uint8{0xff, 0x00, 0x00},
+		HH:      [3]uint8{0x00, 0xff, 0x00},
+	}
+	var buf bytes.Buffer
+	if err := binary.Write(&buf, binary.BigEndian, color); err != nil {
+		t.Fatalf("encoding SetColor: %v", err)
+	}
+	want := []byte{0xb6, 0xff, 0x00, 0x00, 0x00, 0xff, 0x00}
+	if !bytes.Equal(buf.Bytes(), want) {
+		t.Errorf("SetColor encoded to % x, want % x", buf.Bytes(), want)
+	}
+	var back SetColor
+	if err := binary.Read(&buf, binary.BigEndian, &back); err != nil {
+		t.Fatalf("decoding SetColor: %v", err)
+	}
+	if back != color {
+		t.Errorf("SetColor round-trip mismatch: got %+v, want %+v", back, color)
+	}
+}
+
+// TestParseColorSpec covers the rrggbb / rrggbb:rrggbb color syntax:
+// one color applies to all digits, two set MM:SS and HH independently
+func TestParseColorSpec(t *testing.T) {
+	red := [3]uint8{0xff, 0x00, 0x00}
+	green := [3]uint8{0x00, 0xff, 0x00}
+	tests := []struct {
+		spec  string
+		mmss  [3]uint8
+		hh    [3]uint8
+		fails bool
+	}{
+		{spec: "ff0000", mmss: red, hh: red},                                               // all digits red
+		{spec: "FFAA00", mmss: [3]uint8{0xff, 0xaa, 0x00}, hh: [3]uint8{0xff, 0xaa, 0x00}}, // uppercase hex accepted
+		{spec: "ff0000:00ff00", mmss: red, hh: green},                                      // MM:SS red, HH green
+		{spec: "00ff00:ff0000", mmss: green, hh: red},
+		{spec: "ff00", fails: true},                 // too short
+		{spec: "ff00000", fails: true},              // too long
+		{spec: "gg0000", fails: true},               // not hex
+		{spec: "ff0000:00ff00:0000ff", fails: true}, // more than two colors
+		{spec: "ff0000:0", fails: true},             // second color malformed
+		{spec: "", fails: true},                     // empty spec
+	}
+	for _, tc := range tests {
+		mmss, hh, err := parseColorSpec(tc.spec)
+		if tc.fails {
+			if err == nil {
+				t.Errorf("parseColorSpec(%q) = %+v/%+v, want error", tc.spec, mmss, hh)
+			}
+			continue
+		}
+		if err != nil {
+			t.Errorf("parseColorSpec(%q) unexpected error: %v", tc.spec, err)
+			continue
+		}
+		if mmss != tc.mmss {
+			t.Errorf("parseColorSpec(%q) mmss = %+v, want %+v", tc.spec, mmss, tc.mmss)
+		}
+		if hh != tc.hh {
+			t.Errorf("parseColorSpec(%q) hh = %+v, want %+v", tc.spec, hh, tc.hh)
+		}
+	}
+}
+
 // TestResponse20WireFormat pins the 40-byte API 2.0 status packet
 func TestResponse20WireFormat(t *testing.T) {
 	r20 := Response20{
@@ -166,6 +235,9 @@ func TestTimeStructSizes(t *testing.T) {
 	if sz := binary.Size(SetTimer{}); sz != 6 {
 		t.Errorf("SetTimer wire size = %d, want 6", sz)
 	}
+	if sz := binary.Size(SetColor{}); sz != 7 {
+		t.Errorf("SetColor wire size = %d, want 7", sz)
+	}
 	if sz := binary.Size(Response10{}); sz != 34 {
 		t.Errorf("Response10 wire size = %d, want 34 (packet adds one pad byte)", sz)
 	}
@@ -190,6 +262,7 @@ func TestLocatorCommands(t *testing.T) {
 		"time_mode":       "\xa8\x01\x00",
 		"up_set_time":     "\xaa",
 		"down_set_time":   "\xab",
+		"color_set":       "\xb6",
 	}
 	if len(locatorCommands) != len(want) {
 		t.Errorf("locatorCommands has %d entries, want %d", len(locatorCommands), len(want))
@@ -498,6 +571,67 @@ func TestSetTimeRangeRejectDispatch(t *testing.T) {
 	}
 	if len(conns) > 0 {
 		t.Error("should not have dialed the clock with an invalid time")
+	}
+}
+
+// TestColorSetDispatch checks that color_set sends the exact 7-byte
+// packets from API 2.0 section 1.4.6 for both the single-color and
+// two-color forms
+func TestColorSetDispatch(t *testing.T) {
+	tests := []struct {
+		spec string
+		want []byte
+	}{
+		{spec: "ff0000", want: []byte{0xb6, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00}},
+		{spec: "ff0000:00ff00", want: []byte{0xb6, 0xff, 0x00, 0x00, 0x00, 0xff, 0x00}},
+	}
+	for _, tc := range tests {
+		t.Run(tc.spec, func(t *testing.T) {
+			cfg, conns := newFakeConfig([]byte{'A', 0x00})
+			err := runCommand(t, cfg, "color_set", "192.168.42.204", tc.spec)
+			if err != nil {
+				t.Fatalf("ctm color_set %s: %v", tc.spec, err)
+			}
+			select {
+			case fc := <-conns:
+				if got := fc.sendBuf.Bytes(); !bytes.Equal(got, tc.want) {
+					t.Errorf("color_set %s sent % x, want % x", tc.spec, got, tc.want)
+				}
+				if !fc.closeCalled {
+					t.Error("color_set did not close the connection")
+				}
+			default:
+				t.Fatal("no connection was opened")
+			}
+		})
+	}
+}
+
+// TestColorSetRejectDispatch drives invalid color specs and bad arg
+// counts through the command tree: they must fail before the clock
+// is ever dialed
+func TestColorSetRejectDispatch(t *testing.T) {
+	tests := []struct {
+		argv []string
+	}{
+		{argv: []string{"color_set"}},                                           // no args
+		{argv: []string{"color_set", "192.168.42.204"}},                         // missing color
+		{argv: []string{"color_set", "192.168.42.204", "ff0000", "extra"}},      // extra args
+		{argv: []string{"color_set", "192.168.42.204", "ff00"}},                 // wrong length
+		{argv: []string{"color_set", "192.168.42.204", "gg0000"}},               // not hex
+		{argv: []string{"color_set", "192.168.42.204", "ff0000:00ff00:0000ff"}}, // 3 colors
+	}
+	for _, tc := range tests {
+		t.Run(strings.Join(tc.argv, " "), func(t *testing.T) {
+			cfg, conns := newFakeConfig([]byte{'A', 0x00})
+			err := runCommand(t, cfg, tc.argv...)
+			if err == nil {
+				t.Errorf("ctm %v: expected an error", tc.argv)
+			}
+			if len(conns) > 0 {
+				t.Errorf("ctm %v: should not have dialed", tc.argv)
+			}
+		})
 	}
 }
 
