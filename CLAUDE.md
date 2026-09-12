@@ -95,6 +95,9 @@ dispatch.  Dispatch tests drive the real `ffcli` tree via `newCommandTree` with 
 `fakeConn` installed on `clockConfig.dial`; `dialClock` itself is tested against
 loopback UDP sockets (happy path, timeout, bad address).  Coverage is ~83%.
 `-h` cannot be tested in-process because the flag sets use `flag.ExitOnError`.
+Fuzz targets (`FuzzExtractTimePart`, `FuzzParseColorSpec`, `FuzzDisplayModeString`,
+`FuzzStatusDecode`) run their seed corpora as ordinary tests under `go test ./...`;
+fuzz them for real with e.g. `go test -fuzz FuzzExtractTimePart -fuzztime 30s`.
 
 ## Known Gaps
 

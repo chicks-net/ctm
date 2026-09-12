@@ -333,17 +333,19 @@ func sendCommand(dial dialer, address string, timeout time.Duration, command str
 func extractTimePart(value string, part int) (uint8, error) {
 	parts := strings.Split(value, ":")
 
-	if len(parts) > part {
-		n, err := strconv.Atoi(parts[part])
-		if err != nil {
-			return 0, fmt.Errorf("parsing %q as a time component: %w", parts[part], err)
-		}
-		if n < 0 || n > 255 {
-			return 0, fmt.Errorf("time component %q out of range (must be 0-255)", parts[part])
-		}
-		return uint8(n), nil
+	// a negative part index (or one past the last component) yields
+	// zero, mirroring the trailing-components-omitted behavior
+	if part < 0 || part >= len(parts) {
+		return uint8(0), nil
 	}
-	return uint8(0), nil
+	n, err := strconv.Atoi(parts[part])
+	if err != nil {
+		return 0, fmt.Errorf("parsing %q as a time component: %w", parts[part], err)
+	}
+	if n < 0 || n > 255 {
+		return 0, fmt.Errorf("time component %q out of range (must be 0-255)", parts[part])
+	}
+	return uint8(n), nil
 }
 
 // parseHexColor turns one rrggbb hex color into its RGB components.
