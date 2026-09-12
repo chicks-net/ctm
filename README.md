@@ -64,6 +64,11 @@ Subcommands:
 - `down_pause` tells the downtimer to pause (API2.0 clocks only)
 - `down_set_time H:M:S:tenths:hundreds` sets the downtimer like
   `up_set_time` sets the uptimer (API2.0 clocks only)
+- `color_set rrggbb[:rrggbb]` sets the display digit colors on RGB
+  models (API2.0 clocks only).  One color applies to all digits; two
+  colors given as `rrggbb:rrggbb` set the MM:SS digits and the HH
+  digits independently.  The color is volatile - it is not saved
+  across a reboot.
 
 Status output looks like:
 
@@ -101,7 +106,6 @@ acked by clock
 
 - Coming soon:
   - [dimmer set (API2.0)](https://github.com/chicks-net/ctm/issues/40)
-  - [color set for RGB (API2.0)](https://github.com/chicks-net/ctm/issues/41)
   - [Homebrew install](https://github.com/chicks-net/homebrew-chicks/issues/74)
 - Unimplemented:
   - setting dotmatrix text - I don't have [a device to test this](https://timemachinescorp.com/timezone-dot-matrix-network-clocks/) with yet.

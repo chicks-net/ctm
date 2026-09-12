@@ -70,6 +70,12 @@ type SetTimer struct {
 	Hundredths uint8
 }
 
+type SetColor struct {
+	Command uint8
+	MMSS    [3]uint8
+	HH      [3]uint8
+}
+
 const maxBufferSize = 48 // the biggest response packet is 40 bytes
 
 const (
@@ -98,6 +104,7 @@ var locatorCommands = map[string]string{
 	"time_mode":       "\xa8\x01\x00",
 	"up_set_time":     "\xaa",
 	"down_set_time":   "\xab",
+	"color_set":       "\xb6",
 }
 
 // utility functions - type conversion and defaults
@@ -339,6 +346,80 @@ func extractTimePart(value string, part int) (uint8, error) {
 	return uint8(0), nil
 }
 
+// parseHexColor turns one rrggbb hex color into its RGB components.
+// Uppercase hex digits are accepted; anything else is an error.
+func parseHexColor(value string) ([3]uint8, error) {
+	var rgb [3]uint8
+	if len(value) != 6 {
+		return rgb, fmt.Errorf("color %q must be exactly 6 hex digits (rrggbb)", value)
+	}
+	decoded, err := hex.DecodeString(value)
+	if err != nil {
+		return rgb, fmt.Errorf("parsing %q as a hex color: %w", value, err)
+	}
+	copy(rgb[:], decoded)
+	return rgb, nil
+}
+
+// parseColorSpec accepts either a single rrggbb color (applied to all
+// digits) or two colors "rrggbb:rrggbb" (MM:SS digits first, HH digits
+// second), mirroring the colon-delimited syntax of up_set_time
+func parseColorSpec(spec string) (mmss [3]uint8, hh [3]uint8, err error) {
+	parts := strings.Split(spec, ":")
+	switch len(parts) {
+	case 1:
+		mmss, err = parseHexColor(parts[0])
+		hh = mmss
+	case 2:
+		mmss, err = parseHexColor(parts[0])
+		if err == nil {
+			hh, err = parseHexColor(parts[1])
+		}
+	default:
+		return mmss, hh, fmt.Errorf("color spec %q must be rrggbb or rrggbb:rrggbb", spec)
+	}
+	if err != nil {
+		return mmss, hh, err
+	}
+	return mmss, hh, nil
+}
+
+// sendPayload dials the clock, writes a pre-encoded command packet,
+// and waits for the acknowledgement.  It is the shared tail of every
+// command that carries a payload (up_set_time, down_set_time,
+// color_set, and the future dimmer_set).
+func sendPayload(dial dialer, address string, timeout time.Duration, command string, payload []byte) error {
+	conn, err := dial(address, timeout)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	length, err := conn.Write(payload)
+	if err != nil {
+		return fmt.Errorf("sending command %s to %s: %w", command, address, err)
+	}
+	fmt.Printf("sent command %s to %s (%d bytes)\n", command, address, length)
+
+	response := make([]byte, maxBufferSize) // buffer for UDP responses
+	packetLen, err := conn.Read(response)
+	if err == nil {
+		if packetLen != ackPacketSize {
+			fmt.Printf("packet length %d\n", packetLen)
+			return fmt.Errorf("unexpected packet size in UDP response")
+		}
+		if string(response[0]) != "A" {
+			fmt.Println("response hexdump:")
+			fmt.Printf("%s", hex.Dump(response[:packetLen]))
+			return fmt.Errorf("response does not look like an acknowledgement")
+		}
+		fmt.Println("acked by clock")
+	} else {
+		return readError(address, timeout, err)
+	}
+	return nil
+}
+
 func sendSetCommand(dial dialer, address string, timeout time.Duration, command string, timeSpec string) error {
 	var err error
 	timer := SetTimer{}
@@ -367,41 +448,35 @@ func sendSetCommand(dial dialer, address string, timeout time.Duration, command 
 
 	fmt.Println(timer)
 
-	conn, err := dial(address, timeout)
-	if err != nil {
-		return err
-	}
-	defer conn.Close()
-
 	var payload bytes.Buffer // buffer for UDP send
 	err = binary.Write(&payload, binary.BigEndian, timer)
 	if err != nil {
 		return fmt.Errorf("encoding SetTimer struct: %w", err)
 	}
 
-	length, err := conn.Write(payload.Bytes())
-	if err != nil {
-		return fmt.Errorf("sending command %s to %s: %w", command, address, err)
-	}
-	fmt.Printf("sent command %s to %s (%d bytes)\n", command, address, length)
+	return sendPayload(dial, address, timeout, command, payload.Bytes())
+}
 
-	response := make([]byte, maxBufferSize) // buffer for UDP responses
-	packetLen, err := conn.Read(response)
-	if err == nil {
-		if packetLen != ackPacketSize {
-			fmt.Printf("packet length %d\n", packetLen)
-			return fmt.Errorf("unexpected packet size in UDP response")
-		}
-		if string(response[0]) != "A" {
-			fmt.Println("response hexdump:")
-			fmt.Printf("%s", hex.Dump(response[:packetLen]))
-			return fmt.Errorf("response does not look like an acknowledgement")
-		}
-		fmt.Println("acked by clock")
-	} else {
-		return readError(address, timeout, err)
+// sendColorCommand builds and sends the Color Set packet (API 2.0
+// section 1.4.6): command byte 0xB6 followed by the MM:SS digit color
+// and the HH digit color
+func sendColorCommand(dial dialer, address string, timeout time.Duration, command string, colorSpec string) error {
+	mmss, hh, err := parseColorSpec(colorSpec)
+	if err != nil {
+		return err
 	}
-	return nil
+
+	color := SetColor{Command: uint8(locatorCommands[command][0]), MMSS: mmss, HH: hh}
+
+	fmt.Println(color)
+
+	var payload bytes.Buffer // buffer for UDP send
+	err = binary.Write(&payload, binary.BigEndian, color)
+	if err != nil {
+		return fmt.Errorf("encoding SetColor struct: %w", err)
+	}
+
+	return sendPayload(dial, address, timeout, command, payload.Bytes())
 }
 
 // functions that build the command-line interface
@@ -475,6 +550,27 @@ func setTimeCommand(cfg *clockConfig, name string, command string, help string) 
 	}
 }
 
+// setColorCommand builds the subcommand that sends the Color Set
+// packet (API 2.0 RGB displays only; the color is volatile and lost
+// on reboot)
+func setColorCommand(cfg *clockConfig) *ffcli.Command {
+	return &ffcli.Command{
+		Name:       "color_set",
+		ShortUsage: "ctm color_set [flags] <rrggbb[:rrggbb]> <address>",
+		ShortHelp:  "set digit colors on an RGB display (API 2.0 only; volatile - lost on reboot)",
+		FlagSet:    commandFlagSet(cfg, "color_set"),
+		Exec: func(_ context.Context, args []string) error {
+			if len(args) != 2 {
+				return fmt.Errorf("color_set requires exactly 2 arguments (rrggbb[:rrggbb] color and clock address), got %d", len(args))
+			}
+			if _, _, err := parseColorSpec(args[0]); err != nil {
+				return err
+			}
+			return sendColorCommand(cfg.dialOrTest, cfg.addrport(args[1]), cfg.timeout, "color_set", args[0])
+		},
+	}
+}
+
 // newCommandTree builds the full ctm command tree around the given
 // config.  main() and the tests share this so the dispatch logic is
 // exercised exactly as shipped.
@@ -500,6 +596,7 @@ func newCommandTree(config *clockConfig) *ffcli.Command {
 			modeCommand(config, "down_run", "down_mode_run", "run the downtimer"),
 			modeCommand(config, "down_pause", "down_mode_pause", "pause the downtimer"),
 			setTimeCommand(config, "down_set_time", "down_set_time", "set the downtimer to H:M:S:tenths:hundredths (smaller units optional)"),
+			setColorCommand(config),
 		},
 		Exec: func(_ context.Context, args []string) error {
 			if len(args) > 0 {
