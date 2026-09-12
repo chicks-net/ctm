@@ -100,8 +100,6 @@ acked by clock
 ## Known bugs
 
 - Coming soon:
-  - binary releases like <https://github.com/fini-net/gh-observer/blob/main/.github/workflows/release.yml>
-  - [signed releases](https://github.com/chicks-net/ctm/issues/42)
   - [dimmer set (API2.0)](https://github.com/chicks-net/ctm/issues/40)
   - [color set for RGB (API2.0)](https://github.com/chicks-net/ctm/issues/41)
   - [Homebrew install](https://github.com/chicks-net/homebrew-chicks/issues/74)

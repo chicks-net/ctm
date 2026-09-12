@@ -1,0 +1,54 @@
+---
+name: Release smoke test
+
+on:
+  pull_request:
+    paths:
+      - 'justfile'
+      - '.github/workflows/release.yml'
+      - 'go.mod'
+      - '**.go'
+
+# global permissions
+permissions: {}
+
+jobs:
+  release-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          # no caching in a workflow that builds release candidates:
+          # cache poisoning could tamper with future builds (zizmor cache-poisoning)
+          cache: false
+
+      - name: Setup just
+        uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3 # v4
+        with:
+          just-version: '1.58'
+
+      - name: Build all release binaries
+        run: just release-build
+
+      - name: Verify SLSA hash subjects
+        run: |
+          # release-hashes feeds the SLSA generator; assert it covers all 12 binaries
+          count=$(just release-hashes | base64 -d | wc -l)
+          if [ "$count" -ne 12 ]; then
+            echo "Expected 12 hash subjects, got $count" >&2
+            exit 1
+          fi
