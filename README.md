@@ -64,7 +64,7 @@ Subcommands:
 - `down_pause` tells the downtimer to pause (API2.0 clocks only)
 - `down_set_time H:M:S:tenths:hundreds` sets the downtimer like
   `up_set_time` sets the uptimer (API2.0 clocks only)
-- `color_set rrggbb[:rrggbb]` sets the display digit colors on RGB
+- `color_set <clock_ip> rrggbb[:rrggbb]` sets the display digit colors on RGB
   models (API2.0 clocks only).  One color applies to all digits; two
   colors given as `rrggbb:rrggbb` set the MM:SS digits and the HH
   digits independently.  The color is volatile - it is not saved

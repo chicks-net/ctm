@@ -588,7 +588,7 @@ func TestColorSetDispatch(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.spec, func(t *testing.T) {
 			cfg, conns := newFakeConfig([]byte{'A', 0x00})
-			err := runCommand(t, cfg, "color_set", tc.spec, "192.168.42.204")
+			err := runCommand(t, cfg, "color_set", "192.168.42.204", tc.spec)
 			if err != nil {
 				t.Fatalf("ctm color_set %s: %v", tc.spec, err)
 			}
@@ -615,11 +615,11 @@ func TestColorSetRejectDispatch(t *testing.T) {
 		argv []string
 	}{
 		{argv: []string{"color_set"}},                                           // no args
-		{argv: []string{"color_set", "ff0000"}},                                 // missing address
-		{argv: []string{"color_set", "ff0000", "192.168.42.204", "extra"}},      // extra args
-		{argv: []string{"color_set", "ff00", "192.168.42.204"}},                 // wrong length
-		{argv: []string{"color_set", "gg0000", "192.168.42.204"}},               // not hex
-		{argv: []string{"color_set", "ff0000:00ff00:0000ff", "192.168.42.204"}}, // 3 colors
+		{argv: []string{"color_set", "192.168.42.204"}},                         // missing color
+		{argv: []string{"color_set", "192.168.42.204", "ff0000", "extra"}},      // extra args
+		{argv: []string{"color_set", "192.168.42.204", "ff00"}},                 // wrong length
+		{argv: []string{"color_set", "192.168.42.204", "gg0000"}},               // not hex
+		{argv: []string{"color_set", "192.168.42.204", "ff0000:00ff00:0000ff"}}, // 3 colors
 	}
 	for _, tc := range tests {
 		t.Run(strings.Join(tc.argv, " "), func(t *testing.T) {

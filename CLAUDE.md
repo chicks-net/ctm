@@ -49,7 +49,7 @@ ctm [flags] $SUBCOMMAND [flags] $CLOCK_IP
 Subcommands: `status`, `time`, `up_ms`, `up_hms`, `up_run`, `up_pause`, `up_reset_ms`, `up_reset_hms`,
 `up_set_time H:M:S:tenths:hundredths` (trailing components optional, but leading zeros required, e.g. `0:30`),
 `down_run`, `down_pause`, `down_set_time H:M:S:tenths:hundredths` (same time syntax as `up_set_time`),
-`color_set rrggbb[:rrggbb] <clock_ip>` — one hex color applies to all digits, two (`rrggbb:rrggbb`)
+`color_set <clock_ip> rrggbb[:rrggbb]` — one hex color applies to all digits, two (`rrggbb:rrggbb`)
 set the MM:SS and HH digit colors independently (API 2.0 RGB displays only; volatile, lost on reboot).
 
 Global flags (may appear before or after the subcommand, but must precede

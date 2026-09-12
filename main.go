@@ -347,7 +347,7 @@ func extractTimePart(value string, part int) (uint8, error) {
 }
 
 // parseHexColor turns one rrggbb hex color into its RGB components.
-// Uppercase hex digits are accepted; anything else is an error.
+// Hex digits are case-insensitive; anything non-hex is an error.
 func parseHexColor(value string) ([3]uint8, error) {
 	var rgb [3]uint8
 	if len(value) != 6 {
@@ -556,17 +556,14 @@ func setTimeCommand(cfg *clockConfig, name string, command string, help string) 
 func setColorCommand(cfg *clockConfig) *ffcli.Command {
 	return &ffcli.Command{
 		Name:       "color_set",
-		ShortUsage: "ctm color_set [flags] <rrggbb[:rrggbb]> <address>",
+		ShortUsage: "ctm color_set [flags] <address> <rrggbb[:rrggbb]>",
 		ShortHelp:  "set digit colors on an RGB display (API 2.0 only; volatile - lost on reboot)",
 		FlagSet:    commandFlagSet(cfg, "color_set"),
 		Exec: func(_ context.Context, args []string) error {
 			if len(args) != 2 {
-				return fmt.Errorf("color_set requires exactly 2 arguments (rrggbb[:rrggbb] color and clock address), got %d", len(args))
+				return fmt.Errorf("color_set requires exactly 2 arguments (clock address and rrggbb[:rrggbb] color), got %d", len(args))
 			}
-			if _, _, err := parseColorSpec(args[0]); err != nil {
-				return err
-			}
-			return sendColorCommand(cfg.dialOrTest, cfg.addrport(args[1]), cfg.timeout, "color_set", args[0])
+			return sendColorCommand(cfg.dialOrTest, cfg.addrport(args[0]), cfg.timeout, "color_set", args[1])
 		},
 	}
 }
