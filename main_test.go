@@ -880,6 +880,16 @@ func FuzzParseColorSpec(f *testing.F) {
 			if mmss != hh {
 				t.Fatalf("parseColorSpec(%q) single color gave mmss %+v != hh %+v", spec, mmss, hh)
 			}
+			return
+		}
+		// a valid two-color spec must decode the halves independently
+		spec2, spec3, _ := strings.Cut(spec, ":")
+		left, errLeft := parseHexColor(spec2)
+		right, errRight := parseHexColor(spec3)
+		if errLeft == nil && errRight == nil {
+			if mmss != left || hh != right {
+				t.Fatalf("parseColorSpec(%q) = %+v/%+v, want %+v/%+v", spec, mmss, hh, left, right)
+			}
 		}
 	})
 }
