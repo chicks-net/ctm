@@ -11,9 +11,19 @@ API1.1 or API2.0 clock.
 
 ## Install
 
-I'd like to get this in homebrew and Fedora repos eventually, but for now you
-can build the program yourself.  In the main repo directory either of these
-will build `ctm` for your platform:
+Via Homebrew (macOS/Linux, amd64/arm64):
+
+```bash
+brew install chicks-net/chicks/ctm
+```
+
+This installs a prebuilt binary from the
+[GitHub release](https://github.com/chicks-net/ctm/releases); on other
+platforms it falls back to building from source with `go`.
+
+I'd like to get this into Debian eventually too, but for now you can
+also build the program yourself.  In the main repo directory either of
+these will build `ctm` for your platform:
 
 ```bash
 just build   # via the justfile (also: just test, just fmt)
@@ -106,7 +116,6 @@ acked by clock
 
 - Coming soon:
   - [dimmer set (API2.0)](https://github.com/chicks-net/ctm/issues/40)
-  - [Homebrew install](https://github.com/chicks-net/homebrew-chicks/issues/74)
 - Unimplemented:
   - setting dotmatrix text - I don't have [a device to test this](https://timemachinescorp.com/timezone-dot-matrix-network-clocks/) with yet.
   - exec stored program (API2.0)
