@@ -22,7 +22,7 @@ sync:
     git pull
     git status --porcelain # stp
 
-# PR create v9.0
+# PR create v9.9
 [group('Process')]
 pr: _has_commits
     #!/usr/bin/env bash
@@ -130,12 +130,15 @@ merge: _on_a_branch && sync
     gh pr merge -s -d
     # `&& sync` is mostly redundant, but just in case
 
+# [positional-arguments] keeps this recipe self-contained in derived
+# repos, whose root justfile lacks `set positional-arguments` (#367)
 # start a new branch
 [group('Process')]
+[positional-arguments]
 branch branchname: _main_branch
     #!/usr/bin/env bash
     NOW=$(just utcdate)
-    git checkout -b "$USER/$NOW-{{ branchname }}"
+    git checkout -b "$USER/$NOW-$1"
 
 # view PR in web browser
 [group('Process')]
@@ -256,11 +259,15 @@ _wait_for_checks: _on_a_pull_request
 @utcdate:
     TZ=UTC date +"%Y-%m-%d"
 
+# [positional-arguments] keeps this recipe self-contained in derived
+# repos, whose root justfile lacks `set positional-arguments` (#367)
 # make a release
 [group('Process')]
+[positional-arguments]
 release rel_version:
     #!/usr/bin/env bash
     set -euo pipefail
+    rel_version="$1"
 
     # Check if standard release workflow is enabled
     if [[ -e ".just/repo-toml.sh" ]]; then
@@ -276,15 +283,16 @@ release rel_version:
         exit 0
     fi
 
-    # Validate version format - must start with 'v' followed by a digit
-    # shellcheck disable=SC2050  # rel_version is a variable
-    if [[ ! "{{rel_version}}" =~ ^v[0-9] ]]; then
-        echo "{{RED}}Error: Release version must start with 'v' followed by a digit (e.g., v1.0.0, v2.3.4){{NORMAL}}"
+    # Validate version format - must be v, digits, with up to two
+    # .digits groups, nothing else (start-anchored-only regexes let
+    # quote-injection through, #359)
+    if [[ ! "$rel_version" =~ ^v[0-9]+(\.[0-9]+){0,2}$ ]]; then
+        echo "{{RED}}Error: Release version must be v followed by digits and up to two .digits groups (e.g., v1, v1.0, v1.0.0){{NORMAL}}"
         exit 1
     fi
 
     # Standard release workflow
-    gh release create "{{rel_version}}" --generate-notes
+    gh release create "$rel_version" --generate-notes
     sleep 1
     git pull
 
@@ -416,11 +424,14 @@ pr_checks: _on_a_pull_request && claude_review
         [[ "$COPILOT_COUNT" =~ ^[0-9]+$ ]] || COPILOT_COUNT=0
         echo "$COPILOT_COUNT" > "$COPILOT_COUNT_FILE"
 
-        # Display output to maintain current behavior
-        if [[ "$COPILOT_COUNT" -eq 0 ]]; then
-            echo "🐈‍⬛ No unresolved Copilot suggestions - looks good!"
-        else
-            echo "🐈‍⬛ Unresolved Copilot suggestions: $COPILOT_COUNT"
+        # Don't echo the "looks good!" / "Unresolved Copilot suggestions: N"
+        # summary line here - claude_review reads this same count file and
+        # is the single place that summary prints. Printing it in both
+        # recipes duplicated the line on every pr_checks->claude_review run
+        # (pr_checks always chains into claude_review). Only the detailed
+        # JSON dump belongs here, as immediate feedback right after the
+        # GraphQL query.
+        if [[ "$COPILOT_COUNT" -gt 0 ]]; then
             echo "$COPILOT_JSON" | jq '.'
         fi
     else
@@ -804,6 +815,16 @@ again:
 # the again wrapper above
 [group('Process')]
 _again_inner:
+    #!/usr/bin/env bash
+    set -euo pipefail # strict mode
+
+    # The #329 regression path: the RELEASE_NOTES indent fix landed
+    # broken on a pr PR, was fixed, then re-broke on a follow-up push
+    # through 'again'. Run the same pre-PR hook before this push.
+    if [[ -e ".just/pr-hook.just" ]]; then
+        just _pr-hook
+    fi
+
     git push
     just pr_update
     just pr_checks
