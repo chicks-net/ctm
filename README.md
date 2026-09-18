@@ -30,6 +30,43 @@ just build   # via the justfile (also: just test, just fmt)
 make         # via the Makefile
 ```
 
+## macOS note: Local Network permission
+
+macOS 15 (Sequoia) and later gate UDP traffic to machines on your local
+network behind the Local Network privacy permission.  The permission is
+granted per *binary*, and Apple-signed system tools are exempt - the rest
+of us have to ask.  A `ctm` you build yourself (`just build` or `make`)
+is only ad-hoc signed (`codesign -dv ./ctm` shows
+`flags=0x20002(adhoc,linker-signed)`), and macOS never even shows the
+"allow local network" prompt for ad-hoc binaries, so writes to a LAN
+clock just fail:
+
+```ScreenOutput
+ctm: sending status query to 192.168.42.208:7372: write udp ...: write: broken pipe
+```
+
+Quick sanity check that it's the permission and not your network: from
+the same shell, Apple-signed tools like `/usr/bin/nc -u` reach the
+clock fine while `./ctm` gets `broken pipe` on every write.  (ICMP
+isn't gated, so `ping` working proves little on its own - pair it with
+`nc -u`.)
+
+This is a long-standing Go toolchain gap on macOS 15+
+([golang/go#70530](https://github.com/golang/go/issues/70530)), not
+something `ctm` can code its way around, so `just build` can't trigger
+the normal prompt.  Workarounds, cheapest first:
+
+- `sudo ./ctm status 192.168.42.208` - TCC exempts root, no prompt
+  needed.  Fine for poking at a clock by hand, lousy for scripts.
+- If you have an Apple Developer ID, sign the binary yourself with
+  `codesign --force -s "Developer ID Application: YOUR NAME (TEAMID)" ctm`.
+  Real signatures get the standard prompt, which you then click Allow
+  on once.
+- The Homebrew install doesn't save you either: release binaries aren't
+  Developer ID signed yet, and Homebrew's build-from-source fallback
+  ad-hoc signs on your machine too.  Follow along in
+  [#34](https://github.com/chicks-net/ctm/issues/34).
+
 ## Development prerequisites
 
 The `just` recipes need a few tools installed: `just`, `gh`,
@@ -116,6 +153,8 @@ acked by clock
 
 - Coming soon:
   - [dimmer set (API2.0)](https://github.com/chicks-net/ctm/issues/40)
+  - [macOS Local Network permission blocks locally built binaries](https://github.com/chicks-net/ctm/issues/34) - see the
+    [macOS note](#macos-note-local-network-permission) above
 - Unimplemented:
   - setting dotmatrix text - I don't have [a device to test this](https://timemachinescorp.com/timezone-dot-matrix-network-clocks/) with yet.
   - exec stored program (API2.0)
