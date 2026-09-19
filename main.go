@@ -77,6 +77,11 @@ type SetColor struct {
 	HH      [3]uint8
 }
 
+type SetDimmer struct {
+	Command    uint8
+	Brightness uint8
+}
+
 const maxBufferSize = 48 // the biggest response packet is 40 bytes
 
 const (
@@ -106,6 +111,7 @@ var locatorCommands = map[string]string{
 	"up_set_time":     "\xaa",
 	"down_set_time":   "\xab",
 	"color_set":       "\xb6",
+	"dimmer_set":      "\xb5",
 }
 
 // utility functions - type conversion and defaults
@@ -402,7 +408,7 @@ func parseColorSpec(spec string) (mmss [3]uint8, hh [3]uint8, err error) {
 // sendPayload dials the clock, writes a pre-encoded command packet,
 // and waits for the acknowledgement.  It is the shared tail of every
 // command that carries a payload (up_set_time, down_set_time,
-// color_set, and the future dimmer_set).
+// color_set, and dimmer_set).
 func sendPayload(dial dialer, address string, timeout time.Duration, command string, payload []byte) error {
 	conn, err := dial(address, timeout)
 	if err != nil {
@@ -489,6 +495,41 @@ func sendColorCommand(dial dialer, address string, timeout time.Duration, comman
 	err = binary.Write(&payload, binary.BigEndian, color)
 	if err != nil {
 		return fmt.Errorf("encoding SetColor struct: %w", err)
+	}
+
+	return sendPayload(dial, address, timeout, command, payload.Bytes())
+}
+
+// parseDimmerLevel parses a digit-brightness percentage for the
+// Dimmer Set command (API 2.0 section 1.4.4), rejecting anything
+// outside 0-100
+func parseDimmerLevel(value string) (uint8, error) {
+	n, err := strconv.Atoi(value)
+	if err != nil {
+		return 0, fmt.Errorf("parsing %q as a dimmer level: %w", value, err)
+	}
+	if n < 0 || n > 100 {
+		return 0, fmt.Errorf("dimmer level %q out of range (must be 0-100)", value)
+	}
+	return uint8(n), nil
+}
+
+// sendDimmerCommand builds and sends the Dimmer Set packet (API 2.0
+// section 1.4.4): command byte 0xB5 followed by one brightness byte
+func sendDimmerCommand(dial dialer, address string, timeout time.Duration, command string, levelSpec string) error {
+	brightness, err := parseDimmerLevel(levelSpec)
+	if err != nil {
+		return err
+	}
+
+	dimmer := SetDimmer{Command: uint8(locatorCommands[command][0]), Brightness: brightness}
+
+	fmt.Println(dimmer)
+
+	var payload bytes.Buffer // buffer for UDP send
+	err = binary.Write(&payload, binary.BigEndian, dimmer)
+	if err != nil {
+		return fmt.Errorf("encoding SetDimmer struct: %w", err)
 	}
 
 	return sendPayload(dial, address, timeout, command, payload.Bytes())
@@ -583,6 +624,24 @@ func setColorCommand(cfg *clockConfig) *ffcli.Command {
 	}
 }
 
+// setDimmerCommand builds the subcommand that sends the Dimmer Set
+// packet (API 2.0 clocks only; the level is volatile and lost on
+// reboot)
+func setDimmerCommand(cfg *clockConfig) *ffcli.Command {
+	return &ffcli.Command{
+		Name:       "dimmer_set",
+		ShortUsage: "ctm dimmer_set [flags] <address> <level>",
+		ShortHelp:  "set digit brightness 0-100 (API 2.0 only; volatile - lost on reboot)",
+		FlagSet:    commandFlagSet(cfg, "dimmer_set"),
+		Exec: func(_ context.Context, args []string) error {
+			if len(args) != 2 {
+				return fmt.Errorf("dimmer_set requires exactly 2 arguments (clock address and brightness level 0-100), got %d", len(args))
+			}
+			return sendDimmerCommand(cfg.dialOrTest, cfg.addrport(args[0]), cfg.timeout, "dimmer_set", args[1])
+		},
+	}
+}
+
 // newCommandTree builds the full ctm command tree around the given
 // config.  main() and the tests share this so the dispatch logic is
 // exercised exactly as shipped.
@@ -609,6 +668,7 @@ func newCommandTree(config *clockConfig) *ffcli.Command {
 			modeCommand(config, "down_pause", "down_mode_pause", "pause the downtimer"),
 			setTimeCommand(config, "down_set_time", "down_set_time", "set the downtimer to H:M:S:tenths:hundredths (smaller units optional)"),
 			setColorCommand(config),
+			setDimmerCommand(config),
 		},
 		Exec: func(_ context.Context, args []string) error {
 			if len(args) > 0 {

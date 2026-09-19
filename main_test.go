@@ -118,6 +118,60 @@ func TestSetColorWireFormat(t *testing.T) {
 	}
 }
 
+// TestSetDimmerWireFormat pins the 2-byte big-endian Dimmer Set
+// packet from API 2.0 section 1.4.4: 0xB5, then one brightness byte
+func TestSetDimmerWireFormat(t *testing.T) {
+	dimmer := SetDimmer{Command: 0xb5, Brightness: 0x32}
+	var buf bytes.Buffer
+	if err := binary.Write(&buf, binary.BigEndian, dimmer); err != nil {
+		t.Fatalf("encoding SetDimmer: %v", err)
+	}
+	want := []byte{0xb5, 0x32}
+	if !bytes.Equal(buf.Bytes(), want) {
+		t.Errorf("SetDimmer encoded to % x, want % x", buf.Bytes(), want)
+	}
+	var back SetDimmer
+	if err := binary.Read(&buf, binary.BigEndian, &back); err != nil {
+		t.Fatalf("decoding SetDimmer: %v", err)
+	}
+	if back != dimmer {
+		t.Errorf("SetDimmer round-trip mismatch: got %+v, want %+v", back, dimmer)
+	}
+}
+
+// TestParseDimmerLevel covers dimmer level parsing, including both
+// boundaries and out-of-range rejection
+func TestParseDimmerLevel(t *testing.T) {
+	tests := []struct {
+		level string
+		want  uint8
+		fails bool
+	}{
+		{level: "0", want: 0},
+		{level: "50", want: 50},
+		{level: "100", want: 100},
+		{level: "075", want: 75}, // leading zeros ok
+		{level: "101", fails: true},
+		{level: "-1", fails: true},
+		{level: "abc", fails: true},
+		{level: "", fails: true},
+		{level: "50.5", fails: true},
+		{level: " 50", fails: true},
+	}
+	for _, tc := range tests {
+		got, err := parseDimmerLevel(tc.level)
+		if tc.fails {
+			if err == nil {
+				t.Errorf("parseDimmerLevel(%q) = %d, want an error", tc.level, got)
+			}
+		} else if err != nil {
+			t.Errorf("parseDimmerLevel(%q): %v", tc.level, err)
+		} else if got != tc.want {
+			t.Errorf("parseDimmerLevel(%q) = %d, want %d", tc.level, got, tc.want)
+		}
+	}
+}
+
 // TestParseColorSpec covers the rrggbb / rrggbb:rrggbb color syntax:
 // one color applies to all digits, two set MM:SS and HH independently
 func TestParseColorSpec(t *testing.T) {
@@ -270,6 +324,7 @@ func TestLocatorCommands(t *testing.T) {
 		"up_set_time":     "\xaa",
 		"down_set_time":   "\xab",
 		"color_set":       "\xb6",
+		"dimmer_set":      "\xb5",
 	}
 	if len(locatorCommands) != len(want) {
 		t.Errorf("locatorCommands has %d entries, want %d", len(locatorCommands), len(want))
@@ -642,6 +697,70 @@ func TestColorSetRejectDispatch(t *testing.T) {
 	}
 }
 
+// TestDimmerSetDispatch checks that dimmer_set sends the exact 2-byte
+// packets from API 2.0 section 1.4.4, including both brightness
+// boundaries
+func TestDimmerSetDispatch(t *testing.T) {
+	tests := []struct {
+		level string
+		want  []byte
+	}{
+		{level: "50", want: []byte{0xb5, 0x32}},
+		{level: "0", want: []byte{0xb5, 0x00}},
+		{level: "100", want: []byte{0xb5, 0x64}},
+	}
+	for _, tc := range tests {
+		t.Run(tc.level, func(t *testing.T) {
+			cfg, conns := newFakeConfig([]byte{'A', 0x00})
+			err := runCommand(t, cfg, "dimmer_set", "192.168.42.204", tc.level)
+			if err != nil {
+				t.Fatalf("ctm dimmer_set %s: %v", tc.level, err)
+			}
+			select {
+			case fc := <-conns:
+				if got := fc.sendBuf.Bytes(); !bytes.Equal(got, tc.want) {
+					t.Errorf("dimmer_set %s sent % x, want % x", tc.level, got, tc.want)
+				}
+				if !fc.closeCalled {
+					t.Error("dimmer_set did not close the connection")
+				}
+			default:
+				t.Fatal("no connection was opened")
+			}
+		})
+	}
+}
+
+// TestDimmerSetRejectDispatch drives invalid levels and bad arg
+// counts through the command tree: they must fail before the clock
+// is ever dialed
+func TestDimmerSetRejectDispatch(t *testing.T) {
+	tests := []struct {
+		argv []string
+	}{
+		{argv: []string{"dimmer_set"}},                                  // no args
+		{argv: []string{"dimmer_set", "192.168.42.204"}},                // missing level
+		{argv: []string{"dimmer_set", "192.168.42.204", "50", "extra"}}, // extra args
+		{argv: []string{"dimmer_set", "192.168.42.204", "101"}},         // one past the boundary
+		{argv: []string{"dimmer_set", "192.168.42.204", "-1"}},          // negative
+		{argv: []string{"dimmer_set", "192.168.42.204", "abc"}},         // not numeric
+		{argv: []string{"dimmer_set", "192.168.42.204", ""}},            // empty level
+		{argv: []string{"dimmer_set", "192.168.42.204", "50.5"}},        // fractional
+	}
+	for _, tc := range tests {
+		t.Run(strings.Join(tc.argv, " "), func(t *testing.T) {
+			cfg, conns := newFakeConfig([]byte{'A', 0x00})
+			err := runCommand(t, cfg, tc.argv...)
+			if err == nil {
+				t.Errorf("ctm %v: expected an error", tc.argv)
+			}
+			if len(conns) > 0 {
+				t.Errorf("ctm %v: should not have dialed", tc.argv)
+			}
+		})
+	}
+}
+
 // TestFlagsInBothPositions checks that -port and -timeout are
 // accepted before and after the subcommand name and actually reach
 // the dialer
@@ -860,6 +979,7 @@ func TestEPIPEWriteHintDispatch(t *testing.T) {
 		{name: "up_run", argv: []string{"up_run", "192.168.42.208"}},
 		{name: "up_set_time", argv: []string{"up_set_time", "192.168.42.208", "0:30"}},
 		{name: "color_set", argv: []string{"color_set", "192.168.42.208", "ff0000"}},
+		{name: "dimmer_set", argv: []string{"dimmer_set", "192.168.42.208", "50"}},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -988,6 +1108,39 @@ func FuzzParseColorSpec(f *testing.F) {
 			if mmss != left || hh != right {
 				t.Fatalf("parseColorSpec(%q) = %+v/%+v, want %+v/%+v", spec, mmss, hh, left, right)
 			}
+		}
+	})
+}
+
+// FuzzParseDimmerLevel feeds arbitrary strings to the dimmer level
+// parser: no input may panic, and a successful parse must land in
+// the 0-100 range the Dimmer Set command accepts
+func FuzzParseDimmerLevel(f *testing.F) {
+	for _, seed := range []string{
+		"0",
+		"50",
+		"100",
+		"101",
+		"-1",
+		"abc",
+		"",
+		"50.5",
+		"075",
+	} {
+		f.Add(seed)
+	}
+	f.Fuzz(func(t *testing.T, level string) {
+		got, err := parseDimmerLevel(level)
+		if err != nil {
+			// erroring is fine; a nonzero value alongside an
+			// error would mislead the caller
+			if got != 0 {
+				t.Fatalf("parseDimmerLevel(%q) = %d with error %v", level, got, err)
+			}
+			return
+		}
+		if got > 100 {
+			t.Fatalf("parseDimmerLevel(%q) = %d, want 0-100", level, got)
 		}
 	})
 }

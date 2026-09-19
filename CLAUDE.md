@@ -50,7 +50,8 @@ Subcommands: `status`, `time`, `up_ms`, `up_hms`, `up_run`, `up_pause`, `up_rese
 `up_set_time H:M:S:tenths:hundredths` (trailing components optional, but leading zeros required, e.g. `0:30`),
 `down_run`, `down_pause`, `down_set_time H:M:S:tenths:hundredths` (same time syntax as `up_set_time`),
 `color_set <clock_ip> rrggbb[:rrggbb]` — one hex color applies to all digits, two (`rrggbb:rrggbb`)
-set the MM:SS and HH digit colors independently (API 2.0 RGB displays only; volatile, lost on reboot).
+set the MM:SS and HH digit colors independently (API 2.0 RGB displays only; volatile, lost on reboot),
+`dimmer_set <clock_ip> level` — digit brightness 0-100 (API 2.0 only; volatile, lost on reboot).
 
 Global flags (may appear before or after the subcommand, but must precede
 positional args): `-timeout duration` (default `2s`) and `-port` (default `7372`).
@@ -74,10 +75,12 @@ Everything lives in `main.go`. The code is organized around:
   every command that carries a payload
 - **`sendSetCommand(dial, address, timeout, command, time)`** — sends a `SetTimer` struct for `up_set_time`/`down_set_time`
 - **`sendColorCommand(dial, address, timeout, command, colorSpec)`** — sends a `SetColor` struct for `color_set`
+- **`sendDimmerCommand(dial, address, timeout, command, levelSpec)`** — sends a `SetDimmer` struct for `dimmer_set`
 - **`extractTimePart(value, part)`** — parses a colon-delimited time string by index
   (components must be 0-255)
 - **`parseColorSpec(spec)`** — parses `rrggbb` (all digits) or `rrggbb:rrggbb`
   (MM:SS vs HH digits) into two RGB triples
+- **`parseDimmerLevel(value)`** — parses a brightness percent (must be 0-100)
 - **`localNetworkHint(err)`** — appends a pointer to the README's macOS Local
   Network note when a clock write fails with EPIPE (the TCC symptom from issue #34);
   wired into `getStatus`, `sendCommand`, and `sendPayload`
@@ -89,6 +92,7 @@ Wire format structs (all use `encoding/binary` with big-endian):
 - `Response20` (40 bytes, `api2PacketSize`) — API v2.0 status packet, fully decoded and printed by `status`
 - `SetTimer` (6 bytes) — timer set command payload
 - `SetColor` (7 bytes) — color set command payload (API 2.0 section 1.4.6)
+- `SetDimmer` (2 bytes) — dimmer set command payload (API 2.0 section 1.4.4)
 - `Time10` / `Time20` — time display sub-fields (3 vs 4 bytes)
 
 ## Testing
@@ -98,11 +102,11 @@ dispatch.  Dispatch tests drive the real `ffcli` tree via `newCommandTree` with 
 `fakeConn` installed on `clockConfig.dial`; `dialClock` itself is tested against
 loopback UDP sockets (happy path, timeout, bad address).  Coverage is ~83%.
 `-h` cannot be tested in-process because the flag sets use `flag.ExitOnError`.
-Fuzz targets (`FuzzExtractTimePart`, `FuzzParseColorSpec`, `FuzzDisplayModeString`,
-`FuzzStatusDecode`) run their seed corpora as ordinary tests under `go test ./...`;
+Fuzz targets (`FuzzExtractTimePart`, `FuzzParseColorSpec`, `FuzzParseDimmerLevel`,
+`FuzzDisplayModeString`, `FuzzStatusDecode`) run their seed corpora as ordinary tests under `go test ./...`;
 fuzz them for real with e.g. `go test -fuzz FuzzExtractTimePart -fuzztime 30s`.
 
 ## Known Gaps
 
-- API 2.0 features not implemented: dotmatrix text, relay, dimmer, exec stored program
+- API 2.0 features not implemented: dotmatrix text, relay, exec stored program
 - UDP reads wait up to `-timeout` (default 2s); a silent clock exits with an error instead of hanging

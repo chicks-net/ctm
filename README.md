@@ -120,6 +120,9 @@ Subcommands:
   colors given as `rrggbb:rrggbb` set the MM:SS digits and the HH
   digits independently.  The color is volatile - it is not saved
   across a reboot.
+- `dimmer_set <clock_ip> level` sets the digit brightness to a
+  level from 0 to 100 (API2.0 clocks only).  The level is volatile -
+  it is not saved across a reboot.
 
 Status output looks like:
 
@@ -156,7 +159,6 @@ acked by clock
 ## Known bugs
 
 - Coming soon:
-  - [dimmer set (API2.0)](https://github.com/chicks-net/ctm/issues/40)
   - [macOS Local Network permission blocks locally built binaries](https://github.com/chicks-net/ctm/issues/34) - see the
     [macOS note](#macos-note-local-network-permission) above
 - Unimplemented:
