@@ -5,8 +5,11 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
+	"io"
 	"net"
+	"os"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 )
@@ -19,10 +22,14 @@ import (
 type fakeConn struct {
 	sendBuf     bytes.Buffer // what the program writes
 	reply       []byte       // canned packet for the first Read
+	writeErr    error        // when set, Write fails with this error
 	closeCalled bool
 }
 
 func (fc *fakeConn) Write(p []byte) (int, error) {
+	if fc.writeErr != nil {
+		return 0, fc.writeErr
+	}
 	return fc.sendBuf.Write(p)
 }
 
@@ -795,6 +802,97 @@ func TestDialClockBadAddress(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "connecting to") {
 		t.Errorf("error %q does not mention the connection failure", err)
+	}
+}
+
+// TestLocalNetworkHint pins the helper's contract: the hint appears
+// only for EPIPE writes (the signature of a TCC-blocked ad-hoc binary
+// on macOS, issue #34), including through net.OpError wrapping
+func TestLocalNetworkHint(t *testing.T) {
+	epipe := &net.OpError{Op: "write", Net: "udp", Err: &os.SyscallError{Syscall: "write", Err: syscall.EPIPE}}
+	tests := []struct {
+		name string
+		err  error
+		want bool
+	}{
+		{name: "bare EPIPE", err: syscall.EPIPE, want: true},
+		{name: "wrapped in OpError", err: epipe, want: true},
+		{name: "double wrapped", err: fmt.Errorf("sending: %w", epipe), want: true},
+		{name: "other errno", err: syscall.ECONNREFUSED, want: false},
+		{name: "io error", err: io.ErrClosedPipe, want: false},
+		{name: "nil", err: nil, want: false},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			hint := localNetworkHint(tc.err)
+			if tc.want && hint == "" {
+				t.Errorf("localNetworkHint(%v) = empty, want the README pointer", tc.err)
+			}
+			if !tc.want && hint != "" {
+				t.Errorf("localNetworkHint(%v) = %q, want empty", tc.err, hint)
+			}
+		})
+	}
+}
+
+// TestEPIPEWriteHintDispatch drives the real command tree with fakes
+// whose writes fail with EPIPE - as a TCC-blocked ad-hoc binary sees
+// on macOS - and expects each command's error to carry the README
+// pointer.  One case per write-error site.
+func TestEPIPEWriteHintDispatch(t *testing.T) {
+	newEPIPEConfig := func() *clockConfig {
+		return &clockConfig{
+			timeout: time.Second,
+			port:    defaultPort,
+			dial: func(address string, timeout time.Duration) (net.Conn, error) {
+				return &fakeConn{
+					reply:    []byte{'A', 0x00},
+					writeErr: &net.OpError{Op: "write", Net: "udp", Err: &os.SyscallError{Syscall: "write", Err: syscall.EPIPE}},
+				}, nil
+			},
+		}
+	}
+	tests := []struct {
+		name string
+		argv []string
+	}{
+		{name: "status", argv: []string{"status", "192.168.42.208"}},
+		{name: "up_run", argv: []string{"up_run", "192.168.42.208"}},
+		{name: "up_set_time", argv: []string{"up_set_time", "192.168.42.208", "0:30"}},
+		{name: "color_set", argv: []string{"color_set", "192.168.42.208", "ff0000"}},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := runCommand(t, newEPIPEConfig(), tc.argv...)
+			if err == nil {
+				t.Fatal("expected an error when the write fails with EPIPE")
+			}
+			if !strings.Contains(err.Error(), "Local Network permission") {
+				t.Errorf("error %q does not carry the Local Network hint", err)
+			}
+		})
+	}
+}
+
+// TestNonEPIPEWriteNoHintDispatch makes sure a write failing for some
+// other reason stays a plain wrapped error, without the heuristic hint
+func TestNonEPIPEWriteNoHintDispatch(t *testing.T) {
+	cfg := &clockConfig{
+		timeout: time.Second,
+		port:    defaultPort,
+		dial: func(address string, timeout time.Duration) (net.Conn, error) {
+			return &fakeConn{
+				reply:    []byte{'A', 0x00},
+				writeErr: &net.OpError{Op: "write", Net: "udp", Err: &os.SyscallError{Syscall: "write", Err: syscall.ECONNREFUSED}},
+			}, nil
+		},
+	}
+	err := runCommand(t, cfg, "up_run", "192.168.42.208")
+	if err == nil {
+		t.Fatal("expected an error when the write fails")
+	}
+	if strings.Contains(err.Error(), "Local Network permission") {
+		t.Errorf("error %q carries the Local Network hint for a non-EPIPE write", err)
 	}
 }
 

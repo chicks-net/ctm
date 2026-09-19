@@ -78,6 +78,9 @@ Everything lives in `main.go`. The code is organized around:
   (components must be 0-255)
 - **`parseColorSpec(spec)`** — parses `rrggbb` (all digits) or `rrggbb:rrggbb`
   (MM:SS vs HH digits) into two RGB triples
+- **`localNetworkHint(err)`** — appends a pointer to the README's macOS Local
+  Network note when a clock write fails with EPIPE (the TCC symptom from issue #34);
+  wired into `getStatus`, `sendCommand`, and `sendPayload`
 
 Wire format structs (all use `encoding/binary` with big-endian):
 

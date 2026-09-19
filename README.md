@@ -45,6 +45,10 @@ clock just fail:
 ctm: sending status query to 192.168.42.208:7372: write udp ...: write: broken pipe
 ```
 
+(`ctm` detects exactly this failure - a write dying with `broken
+pipe` - and appends a pointer back to this note, so if you've landed
+here from an error message: yes, it's the permission.)
+
 Quick sanity check that it's the permission and not your network: from
 the same shell, Apple-signed tools like `/usr/bin/nc -u` reach the
 clock fine while `./ctm` gets `broken pipe` on every write.  (ICMP
