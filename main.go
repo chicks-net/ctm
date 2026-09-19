@@ -12,6 +12,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/peterbourgon/ff/v3/ffcli"
@@ -143,6 +144,18 @@ func readError(address string, timeout time.Duration, err error) error {
 	return fmt.Errorf("reading response from %s: %w", address, err)
 }
 
+// localNetworkHint turns the signature EPIPE-on-write of a TCC-blocked
+// ad-hoc binary on macOS (issue #34) into a pointer at the README's
+// workaround note.  Connected-UDP writes almost never fail this way,
+// so any EPIPE write earns the hint; the wording hedges for the rare
+// non-macOS case.  Empty when the error is something else.
+func localNetworkHint(err error) string {
+	if !errors.Is(err, syscall.EPIPE) {
+		return ""
+	}
+	return " (if this is macOS, its Local Network permission is likely blocking ctm - see README: macOS note: Local Network permission)"
+}
+
 // dialer is the seam the tests use to stand in for real clock
 // connections: production code passes dialClock, tests pass a fake
 type dialer func(address string, timeout time.Duration) (net.Conn, error)
@@ -219,7 +232,7 @@ func getStatus(dial dialer, address string, timeout time.Duration) error {
 
 	_, err = fmt.Fprint(conn, locatorCommands["device_query"])
 	if err != nil {
-		return fmt.Errorf("sending status query to %s: %w", address, err)
+		return fmt.Errorf("sending status query to %s: %w%s", address, err, localNetworkHint(err))
 	}
 	fmt.Printf("sent status query to %s\n", address)
 
@@ -307,7 +320,7 @@ func sendCommand(dial dialer, address string, timeout time.Duration, command str
 
 	_, err = fmt.Fprint(conn, locatorCommands[command])
 	if err != nil {
-		return fmt.Errorf("sending command %s to %s: %w", command, address, err)
+		return fmt.Errorf("sending command %s to %s: %w%s", command, address, err, localNetworkHint(err))
 	}
 	fmt.Printf("sent command %s to %s\n", command, address)
 
@@ -399,7 +412,7 @@ func sendPayload(dial dialer, address string, timeout time.Duration, command str
 
 	length, err := conn.Write(payload)
 	if err != nil {
-		return fmt.Errorf("sending command %s to %s: %w", command, address, err)
+		return fmt.Errorf("sending command %s to %s: %w%s", command, address, err, localNetworkHint(err))
 	}
 	fmt.Printf("sent command %s to %s (%d bytes)\n", command, address, length)
 
