@@ -106,6 +106,20 @@ Fuzz targets (`FuzzExtractTimePart`, `FuzzParseColorSpec`, `FuzzParseDimmerLevel
 `FuzzDisplayModeString`, `FuzzStatusDecode`) run their seed corpora as ordinary tests under `go test ./...`;
 fuzz them for real with e.g. `go test -fuzz FuzzExtractTimePart -fuzztime 30s`.
 
+## Releases
+
+Cross-platform release binaries are cut with the `[group('Release')]` recipes
+in the root `justfile` (imported from `.just/gh-process.just` for the
+`release`/`again`/`merge` PR-lifecycle recipes): `release-validate` checks
+the `vN[.N[.N]]` tag format, `release-build` cross-compiles to `dist/` for
+the platforms in `release_platforms` (darwin/freebsd/linux/windows across
+386/amd64/arm/arm64), `release-sign` signs binaries with `cosign` (keyless,
+requires CI OIDC), `release-hashes` prints base64 SHA256 hashes for SLSA
+provenance, `release-upload` attaches binaries/signatures to a GitHub
+release via `gh release upload`, and `release-check` smoke-tests that all
+expected assets landed. Run `just --list` to see the full recipe set,
+grouped.
+
 ## Known Gaps
 
 - API 2.0 features not implemented: dotmatrix text, relay, exec stored program
