@@ -2,6 +2,7 @@
 # ctm = Control Time Machines
 
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/chicks-net/ctm/badge)](https://scorecard.dev/viewer/?uri=github.com/chicks-net/ctm)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/14822/badge)](https://www.bestpractices.dev/projects/14822)
 
 Control Time Machines (`ctm`) lets you control clocks
 from [Time Machines Corp.](https://timemachinescorp.com).
