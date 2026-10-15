@@ -47,6 +47,10 @@ jobs:
       # submission requirements link to; requires the CODECOV_TOKEN secret
       # because codecov no longer supports tokenless uploads from CI pushes
       - name: Upload coverage to Codecov
+        # plain pull_request triggers don't inject secrets into fork PRs, so
+        # the upload can't authenticate there - skip the doomed attempt;
+        # same-repo PRs (incl. Renovate branches) and pushes to main still run
+        if: github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'push'
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           files: coverage.out
