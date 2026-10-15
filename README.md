@@ -1,16 +1,24 @@
 <!-- markdownlint-disable MD033 -->
 # ctm = Control Time Machines
 
+[![GitHub release](https://img.shields.io/github/v/release/chicks-net/ctm)](https://github.com/chicks-net/ctm/releases/latest)
+[![License: GPL-2.0](https://img.shields.io/badge/license-GPL--2.0-blue)](LICENSE)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/chicks-net/ctm/badge)](https://scorecard.dev/viewer/?uri=github.com/chicks-net/ctm)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/14822/badge)](https://www.bestpractices.dev/projects/14822)
 
-Control Time Machines (`ctm`) lets you control clocks
-from [Time Machines Corp.](https://timemachinescorp.com).
+**ctm** controls [Time Machines Corp.](https://timemachinescorp.com)
+PoE network clocks from the command line - status, timers, colors, and
+brightness, over UDP.
 
-Status: Can retrieve status, use uptimers and downtimers with an
-API1.1 or API2.0 clock.
+What works:
+
+- status queries against API 1.x and API 2.0 clocks
+- uptimers (API 1.x and 2.0) and downtimers (API 2.0)
+- RGB digit colors and brightness dimming (API 2.0 RGB models)
 
 ![image of stacked digital clocks](docs/clocks2022.jpg)
+
+![animated ctm status query against an API 2.0 clock](docs/ctm-status-20.gif)
 
 ## Install
 
@@ -34,6 +42,14 @@ make         # via the Makefile
 ```
 
 ## macOS note: Local Network permission
+
+macOS 15 (Sequoia) and later gate LAN UDP traffic behind the Local
+Network permission, and locally built binaries never get the prompt -
+clock writes just fail with `broken pipe`.  Details and workarounds
+below.
+
+<details>
+<summary>Details &amp; workarounds</summary>
 
 macOS 15 (Sequoia) and later gate UDP traffic to machines on your local
 network behind the Local Network privacy permission.  The permission is
@@ -74,6 +90,8 @@ the normal prompt.  Workarounds, cheapest first:
   ad-hoc signs on your machine too.  Follow along in
   [#34](https://github.com/chicks-net/ctm/issues/34).
 
+</details>
+
 ## Development prerequisites
 
 The `just` recipes need a few tools installed: `just`, `gh`,
@@ -106,30 +124,31 @@ Animated:
 
 Subcommands:
 
-- `status` returns the clock's status
-- `time` puts the clock into time display mode
-- `up_ms` puts the clock into uptimer mode displaying minutes and seconds
-- `up_hms` puts the clock into uptimer mode displaying hours, minutes and seconds
-- `up_run` tells the uptimer to run
-- `up_pause` tells the uptimer to pause
-- `up_reset_ms` resets the uptimer displaying minutes and seconds
-- `up_reset_hms` resets the uptimer displaying hours, minutes and seconds
-- `up_set_time H:M:S:tenths:hundreds` sets the uptimer to the
-  hours`:`minutes`:`seconds`:`tenths`:`hundreths and you can drop off any of
-  the smaller units that are irrelevant to you.  If you want no hours you still
-  need to start with `0:`.
-- `down_run` tells the downtimer to run (API2.0 clocks only)
-- `down_pause` tells the downtimer to pause (API2.0 clocks only)
-- `down_set_time H:M:S:tenths:hundreds` sets the downtimer like
-  `up_set_time` sets the uptimer (API2.0 clocks only)
-- `color_set <clock_ip> rrggbb[:rrggbb]` sets the display digit colors on RGB
-  models (API2.0 clocks only).  One color applies to all digits; two
-  colors given as `rrggbb:rrggbb` set the MM:SS digits and the HH
-  digits independently.  The color is volatile - it is not saved
+| Command | API | Effect |
+| ------- | --- | ------ |
+| `status` | 1.x + 2.0 | query and dump the clock's status |
+| `time` | 1.x + 2.0 | return to time display mode |
+| `up_ms` / `up_hms` | 1.x + 2.0 | uptimer mode (MM:SS / H:MM:SS) |
+| `up_run` / `up_pause` | 1.x + 2.0 | start / pause the uptimer |
+| `up_reset_ms` / `up_reset_hms` | 1.x + 2.0 | reset the uptimer |
+| `up_set_time` | 1.x + 2.0 | preset the uptimer |
+| `down_run` / `down_pause` | 2.0 | start / pause the downtimer |
+| `down_set_time` | 2.0 | preset the downtimer |
+| `color_set` | 2.0 | set digit colors on RGB models |
+| `dimmer_set` | 2.0 | set digit brightness (0-100) |
+
+Argument details:
+
+- `up_set_time H:M:S:tenths:hundredths` (and `down_set_time` for the
+  downtimer, same syntax) - you can drop off any of the smaller units
+  that are irrelevant to you.  If you want no hours you still need to
+  start with `0:`.
+- `color_set <clock_ip> rrggbb[:rrggbb]` - one color applies to all
+  digits; two colors given as `rrggbb:rrggbb` set the MM:SS digits and
+  the HH digits independently.  The color is volatile - it is not saved
   across a reboot.
-- `dimmer_set <clock_ip> level` sets the digit brightness to a
-  level from 0 to 100 (API2.0 clocks only).  The level is volatile -
-  it is not saved across a reboot.
+- `dimmer_set <clock_ip> level` - the level is volatile - it is not
+  saved across a reboot.
 
 Status output looks like:
 
@@ -194,6 +213,9 @@ Animated:
   - setting dotmatrix text - I don't have [a device to test this](https://timemachinescorp.com/timezone-dot-matrix-network-clocks/) with yet.
   - exec stored program (API2.0)
   - relay close (API2.0)
+- Impossible:
+  - There does not seem to be any documented way to retrieve the current color
+    setting from RGB clocks.
 
 ## References
 
@@ -202,6 +224,6 @@ Animated:
 - I don't have a URL for the API v1.1 docs, but TimeMachinesCorp sent me a copy
   and not much has changed.
 - [Glen Gorton's project](https://github.com/ggmp3/Q-SYS-CSS-TimeMachines-Clock-B-Series-)
-  is the other repo on github for these clicks.  It looks pretty cool actually,
+  is the other repo on github for these clocks.  It looks pretty cool actually,
   but the language is obscure to me and I'm unlikely to license the development
   environment just to try this out.
