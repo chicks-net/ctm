@@ -213,6 +213,9 @@ Animated:
   - setting dotmatrix text - I don't have [a device to test this](https://timemachinescorp.com/timezone-dot-matrix-network-clocks/) with yet.
   - exec stored program (API2.0)
   - relay close (API2.0)
+- Impossible:
+  - There does not seem to be any documented way to retrieve the current color
+    setting from RGB clocks.
 
 ## References
 
