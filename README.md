@@ -10,6 +10,8 @@ from [Time Machines Corp.](https://timemachinescorp.com).
 Status: Can retrieve status, use uptimers and downtimers with an
 API1.1 or API2.0 clock.
 
+![image of stacked digital clocks](docs/clocks2022.jpg)
+
 ## Install
 
 Via Homebrew (macOS/Linux, amd64/arm64):
@@ -180,6 +182,8 @@ Animated:
 ![animated ctm time demo](docs/ctm-time.gif)
 
 ![animated ctm color_set demo](docs/ctm-color_set-purple.gif)
+
+![image of stacked digital clocks](docs/clocks2026.jpg)
 
 ## Known bugs
 
