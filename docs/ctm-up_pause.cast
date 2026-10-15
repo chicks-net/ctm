@@ -1,0 +1,7 @@
+{"version":3,"term":{"cols":120,"rows":46,"type":"tmux-256color","version":"tmux 3.7c","theme":{"fg":"#c7c7c7","bg":"#000000","palette":"#626262:#f18a78:#c3f985:#fffec9:#afd4fb:#f295f8:#d1d2fb:#f2f2f2:#8f8f8f:#f7c7c0:#defcc0:#fffeda:#c8e3fd:#f6b6fa:#e6e7fd:#ffffff"}},"timestamp":1792037866,"command":"sh -c 'c=\"sudo ./ctm up_pause 192.168.42.208\"; printf \"$ %s\\n\" \"$c\"; exec $c'","env":{"SHELL":"/bin/zsh"}}
+[0.007, "o", "$ sudo ./ctm up_pause 192.168.42.208\r\n"]
+[0.016, "o", "Password:"]
+[2.219, "o", "\r\n"]
+[0.166, "o", "sent command up_mode_pause to 192.168.42.208:7372\r\n"]
+[0.003, "o", "acked by clock\r\n"]
+[0.002, "x", "0"]

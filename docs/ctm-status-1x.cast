@@ -1,0 +1,8 @@
+{"version":3,"term":{"cols":120,"rows":46,"type":"tmux-256color","version":"tmux 3.7c","theme":{"fg":"#c7c7c7","bg":"#000000","palette":"#626262:#f18a78:#c3f985:#fffec9:#afd4fb:#f295f8:#d1d2fb:#f2f2f2:#8f8f8f:#f7c7c0:#defcc0:#fffeda:#c8e3fd:#f6b6fa:#e6e7fd:#ffffff"}},"timestamp":1792037855,"command":"sh -c 'c=\"sudo ./ctm status 192.168.42.204\"; printf \"$ %s\\n\" \"$c\"; exec $c'","env":{"SHELL":"/bin/zsh"}}
+[0.008, "o", "$ sudo ./ctm status 192.168.42.204\r\n"]
+[0.025, "o", "Password:"]
+[2.237, "o", "\r\n"]
+[0.225, "o", "sent status query to 192.168.42.204:7372\r\n"]
+[0.007, "o", "response hexdump:\r\n00000000  01 c0 a8 2a cc 70 b3 d5  75 68 e2 05 00 3d f4 04  |...*.p..uh...=..|\r\n00000010  11 25 50 4f 45 5f 43 6c  6f 63 6b 5f 55 54 43 00  |.%POE_Clock_UTC.|\r\n00000020  00 00 00                                          |...|\r\npacket length 35 (API version 1.x)\r\n"]
+[0.000, "o", "Type 1\r\nIP 192.168.42.204\r\nMAC 70b3d57568e2\r\nVer 0500\r\nSyncs 15860\r\nTime {4 17 37}\r\nName POE_Clock_UTC\u0000\u0000\u0000\r\n"]
+[0.002, "x", "0"]
