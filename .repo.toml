@@ -1,8 +1,8 @@
 # .repo.toml
 
 [about]
-description = "Control Time Machines - control timemachinescorp.com clocks"
-topics = ["cli", "go", "golang", "network-clocks", "time", "udp"]
+description = "\"Control Time Machines\" - control timemachinescorp.com clocks over UDP — status, timers, colors, dimming"
+topics = ["cli", "clock", "clock-control", "clocks", "command-line-tool", "countdown", "countdown-timer", "digital-clock", "go", "golang", "homelab", "network-clocks", "poe", "rgb", "stopwatch", "time", "time-machines", "timer", "timer-clock", "udp"]
 license = "GPL-2.0-only"
 
 [urls]
