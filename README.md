@@ -3,6 +3,8 @@
 
 [![GitHub release](https://img.shields.io/github/v/release/chicks-net/ctm)](https://github.com/chicks-net/ctm/releases/latest)
 [![License: GPL-2.0](https://img.shields.io/badge/license-GPL--2.0-blue)](LICENSE)
+[![Go Reference](https://pkg.go.dev/badge/github.com/chicks-net/ctm.svg)](https://pkg.go.dev/github.com/chicks-net/ctm)
+[![codecov](https://codecov.io/gh/chicks-net/ctm/graph/badge.svg)](https://codecov.io/gh/chicks-net/ctm)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/chicks-net/ctm/badge)](https://scorecard.dev/viewer/?uri=github.com/chicks-net/ctm)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/14822/badge)](https://www.bestpractices.dev/projects/14822)
 

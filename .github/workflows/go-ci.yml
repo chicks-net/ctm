@@ -41,4 +41,14 @@ jobs:
         run: go vet ./...
 
       - name: Test
-        run: go test ./...
+        run: go test ./... -covermode=atomic -coverprofile=coverage.out
+
+      # publishes the coverage report that the README badge and awesome-go's
+      # submission requirements link to; requires the CODECOV_TOKEN secret
+      # because codecov no longer supports tokenless uploads from CI pushes
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          files: coverage.out
+          token: ${{ secrets.CODECOV_TOKEN }}
+          disable_search: true
