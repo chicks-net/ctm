@@ -26,11 +26,34 @@ build:
 test:
     go test ./...
 
-# run go tests
+# run command tests
 [group('Testing/Automation')]
 local-test: build
 	sudo ./ctm status 192.168.42.208
 	sudo ./ctm status 192.168.42.204
+
+[group('Testing/Automation')]
+record-examples: build
+	asciinema record --overwrite --command 'sh -c '\''c="sudo ./ctm status 192.168.42.204"; printf "$ %s\n" "$c"; exec $c'\''' docs/ctm-status-1x.cast
+	asciinema record --overwrite --command 'sh -c '\''c="sudo ./ctm status 192.168.42.208"; printf "$ %s\n" "$c"; exec $c'\''' docs/ctm-status-20.cast
+	asciinema record --overwrite --command 'sh -c '\''c="./ctm -h"; printf "$ %s\n" "$c"; exec $c'\''' docs/ctm-help.cast
+	asciinema record --overwrite --command 'sh -c '\''c="sudo ./ctm color_set 192.168.42.208 ff00ff"; printf "$ %s\n" "$c"; exec $c'\''' docs/ctm-color_set-purple.cast
+	asciinema record --overwrite --command 'sh -c '\''c="sudo ./ctm up_hms 192.168.42.208"; printf "$ %s\n" "$c"; exec $c'\''' docs/ctm-up_hms.cast
+	asciinema record --overwrite --command 'sh -c '\''c="sudo ./ctm up_run 192.168.42.208"; printf "$ %s\n" "$c"; exec $c'\''' docs/ctm-up_run.cast
+	asciinema record --overwrite --command 'sh -c '\''c="sudo ./ctm up_pause 192.168.42.208"; printf "$ %s\n" "$c"; exec $c'\''' docs/ctm-up_pause.cast
+	asciinema record --overwrite --command 'sh -c '\''c="sudo ./ctm time 192.168.42.208"; printf "$ %s\n" "$c"; exec $c'\''' docs/ctm-time.cast
+
+[group('Testing/Automation')]
+convert-example-to-gif:
+	agg --idle-time-limit 0.5 --rows 16 docs/ctm-status-1x.cast         docs/ctm-status-1x.gif
+	agg --idle-time-limit 0.5 --rows 21 docs/ctm-status-20.cast         docs/ctm-status-20.gif
+	agg --idle-time-limit 0.5 --rows 28 docs/ctm-help.cast              docs/ctm-help.gif
+	agg --idle-time-limit 0.5 --rows 6  docs/ctm-color_set-purple.cast  docs/ctm-color_set-purple.gif
+	agg --idle-time-limit 0.5 --rows 5  docs/ctm-up_hms.cast            docs/ctm-up_hms.gif
+	agg --idle-time-limit 0.5 --rows 5  docs/ctm-up_run.cast            docs/ctm-up_run.gif
+	agg --idle-time-limit 0.5 --rows 5  docs/ctm-up_pause.cast          docs/ctm-up_pause.gif
+	agg --idle-time-limit 0.5 --rows 5  docs/ctm-time.cast              docs/ctm-time.gif
+
 
 # release build platforms (goos-goarch pairs matching gh-observer release.yml)
 release_platforms := "darwin-amd64 darwin-arm64 freebsd-386 freebsd-amd64 freebsd-arm64 linux-386 linux-amd64 linux-arm linux-arm64 windows-386 windows-amd64 windows-arm64"

@@ -10,6 +10,8 @@ from [Time Machines Corp.](https://timemachinescorp.com).
 Status: Can retrieve status, use uptimers and downtimers with an
 API1.1 or API2.0 clock.
 
+![image of stacked digital clocks](docs/clocks2022.jpg)
+
 ## Install
 
 Via Homebrew (macOS/Linux, amd64/arm64):
@@ -98,6 +100,10 @@ positional args):
 
 `ctm help` (or `ctm -h`, or `ctm $SUBCOMMAND -h`) prints usage.
 
+Animated:
+
+![animated ctm -h output](docs/ctm-help.gif)
+
 Subcommands:
 
 - `status` returns the clock's status
@@ -143,6 +149,14 @@ Time {2 42 44}
 Name POE_Clock_UTC
 ```
 
+Animated, querying an API 1.x clock:
+
+![animated ctm status query against an API 1.x clock](docs/ctm-status-1x.gif)
+
+Animated, querying an API 2.0 clock:
+
+![animated ctm status query against an API 2.0 clock](docs/ctm-status-20.gif)
+
 Using the uptimer looks like:
 
 ```bash
@@ -156,6 +170,20 @@ $ ./ctm time 192.168.42.204
 sent command time_mode to 192.168.42.204:7372
 acked by clock
 ```
+
+Animated:
+
+![animated ctm up_hms demo](docs/ctm-up_hms.gif)
+
+![animated ctm up_run demo](docs/ctm-up_run.gif)
+
+![animated ctm up_pause demo](docs/ctm-up_pause.gif)
+
+![animated ctm time demo](docs/ctm-time.gif)
+
+![animated ctm color_set demo](docs/ctm-color_set-purple.gif)
+
+![image of stacked digital clocks](docs/clocks2026.jpg)
 
 ## Known bugs
 
