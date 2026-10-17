@@ -20,6 +20,19 @@
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
+# Go workspace file
+go.work
+go.work.sum
+
+# env file
+.env
+
+# MacOS debris
+.DS_Store
+
+# vim swap files
+*.sw[a-p]
+
 # repo-level cache for justfiles, etc.
 /.cache
 
@@ -27,3 +40,8 @@
 /.just/repo-toml.sh
 /.just/copilot_backups/
 /.claude/settings.local.json.backup
+
+# opencode
+/.opencode/plans/
+/.opencode/bun.lock
+/.opencode/package.json
