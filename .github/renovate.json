@@ -28,11 +28,6 @@
       "matchManagers": ["github-actions"],
       "matchUpdateTypes": ["major", "minor", "patch", "digest"],
       "automerge": false
-    },
-    {
-      "matchDepNames": ["bridgecrewio/checkov-action"],
-      "overrideDatasource": "git-refs",
-      "overridePackageName": "https://github.com/bridgecrewio/checkov-action"
     }
   ],
   "prConcurrentLimit": 3,
