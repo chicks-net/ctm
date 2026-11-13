@@ -692,16 +692,24 @@ func newCommandTree(config *clockConfig) *ffcli.Command {
 	return root
 }
 
-func main() {
-	var config clockConfig
+// run builds the command tree around the given config and executes it
+// with the given arguments, returning the process exit code: 0 for
+// success, 1 for any error.  Help requests also return 1; ffcli has
+// already printed the usage to stderr by then, so they skip the
+// "ctm: " error line.  main() is a one-line shim over run so the
+// exit-code contract stays testable.
+func run(config *clockConfig, args []string) int {
+	root := newCommandTree(config)
 
-	root := newCommandTree(&config)
-
-	err := root.ParseAndRun(context.Background(), os.Args[1:])
-	if err != nil {
+	if err := root.ParseAndRun(context.Background(), args); err != nil {
 		if !errors.Is(err, flag.ErrHelp) {
 			fmt.Fprintf(os.Stderr, "ctm: %v\n", err)
 		}
-		os.Exit(1)
+		return 1
 	}
+	return 0
+}
+
+func main() {
+	os.Exit(run(&clockConfig{}, os.Args[1:]))
 }

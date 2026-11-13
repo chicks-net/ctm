@@ -4,10 +4,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
+	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 	"syscall"
 	"testing"
@@ -23,6 +26,7 @@ type fakeConn struct {
 	sendBuf     bytes.Buffer // what the program writes
 	reply       []byte       // canned packet for the first Read
 	writeErr    error        // when set, Write fails with this error
+	readErr     error        // when set, Read fails with this error
 	closeCalled bool
 }
 
@@ -34,6 +38,9 @@ func (fc *fakeConn) Write(p []byte) (int, error) {
 }
 
 func (fc *fakeConn) Read(p []byte) (int, error) {
+	if fc.readErr != nil {
+		return 0, fc.readErr
+	}
 	n := copy(p, fc.reply)
 	if n == 0 {
 		return 0, fmt.Errorf("fake clock has no more data")
@@ -71,11 +78,43 @@ func newFakeConfig(reply []byte) (*clockConfig, chan *fakeConn) {
 }
 
 // runCommand drives the real command tree with argv, mirroring what
-// main() does with os.Args
+// run() does before the exit-code mapping
 func runCommand(t *testing.T, cfg *clockConfig, argv ...string) error {
 	t.Helper()
 	root := newCommandTree(cfg)
 	return root.ParseAndRun(context.Background(), argv)
+}
+
+// captureOutput runs fn with the given standard stream (os.Stdout or
+// os.Stderr) redirected into a pipe and returns what fn printed to
+// it.  The status decoder and run()'s error reporting print directly
+// to those streams, so a test can only pin that text - and which
+// stream it lands on - by swapping the stream for a pipe.
+func captureOutput(t *testing.T, stream **os.File, fn func()) string {
+	t.Helper()
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("os.Pipe: %v", err)
+	}
+	saved := *stream
+	*stream = w
+	defer func() { *stream = saved }()
+
+	var buf bytes.Buffer
+	readDone := make(chan struct{})
+	go func() {
+		_, _ = io.Copy(&buf, r)
+		close(readDone)
+	}()
+
+	fn()
+
+	// close the write end so the reader goroutine sees EOF, then wait
+	// for it; the returned string then holds everything fn printed
+	w.Close()
+	<-readDone
+	r.Close()
+	return buf.String()
 }
 
 // TestSetTimerWireFormat pins the 6-byte big-endian payload that
@@ -492,6 +531,51 @@ func TestSendCommandWrongSize(t *testing.T) {
 	}
 }
 
+// TestSendPayloadBadResponse makes sure a non-ack reply to a payload
+// command is an error.  All four payload commands share sendPayload's
+// ack handling, so each one gets the same bad reply.
+func TestSendPayloadBadResponse(t *testing.T) {
+	for _, argv := range [][]string{
+		{"up_set_time", "192.168.42.204", "0:30"},
+		{"down_set_time", "192.168.42.204", "0:30"},
+		{"color_set", "192.168.42.204", "ff0000"},
+		{"dimmer_set", "192.168.42.204", "50"},
+	} {
+		t.Run(strings.Join(argv, " "), func(t *testing.T) {
+			cfg, _ := newFakeConfig([]byte{'N', 0x00})
+			err := runCommand(t, cfg, argv...)
+			if err == nil {
+				t.Fatalf("ctm %v: expected an error when the clock does not ack", argv)
+			}
+			if !strings.Contains(err.Error(), "acknowledgement") {
+				t.Errorf("error %q does not mention the missing acknowledgement", err)
+			}
+		})
+	}
+}
+
+// TestSendPayloadWrongSize makes sure an unexpected packet size in
+// reply to a payload command is an error
+func TestSendPayloadWrongSize(t *testing.T) {
+	for _, argv := range [][]string{
+		{"up_set_time", "192.168.42.204", "0:30"},
+		{"down_set_time", "192.168.42.204", "0:30"},
+		{"color_set", "192.168.42.204", "ff0000"},
+		{"dimmer_set", "192.168.42.204", "50"},
+	} {
+		t.Run(strings.Join(argv, " "), func(t *testing.T) {
+			cfg, _ := newFakeConfig([]byte{'A'}) // 1 byte: too short for an ack
+			err := runCommand(t, cfg, argv...)
+			if err == nil {
+				t.Fatalf("ctm %v: expected an error for a short ack packet", argv)
+			}
+			if !strings.Contains(err.Error(), "unexpected packet size") {
+				t.Errorf("error %q does not mention packet size", err)
+			}
+		})
+	}
+}
+
 // TestRequireAddress covers the arg-count validation for subcommands
 func TestRequireAddress(t *testing.T) {
 	if _, err := requireAddress("status", nil); err == nil {
@@ -534,6 +618,31 @@ func TestRequireAddressDispatch(t *testing.T) {
 		if tc.fails && len(conns) > 0 {
 			t.Errorf("ctm %v: should not have dialed", tc.argv)
 		}
+	}
+}
+
+// TestStatusArgCountDispatch drives the status subcommand's arg-count
+// validation through the real tree (the other subcommands are covered
+// by TestRequireAddressDispatch): a bad count must fail before the
+// clock is ever dialed
+func TestStatusArgCountDispatch(t *testing.T) {
+	for _, argv := range [][]string{
+		{"status"},           // missing address
+		{"status", "a", "b"}, // extra args
+	} {
+		t.Run(strings.Join(argv, " "), func(t *testing.T) {
+			cfg, conns := newFakeConfig([]byte{'A', 0x00})
+			err := runCommand(t, cfg, argv...)
+			if err == nil {
+				t.Errorf("ctm %v: expected an error", argv)
+			}
+			if !strings.Contains(err.Error(), "requires exactly 1 argument") {
+				t.Errorf("error %q does not mention the arg-count problem", err)
+			}
+			if len(conns) > 0 {
+				t.Errorf("ctm %v: should not have dialed", argv)
+			}
+		})
 	}
 }
 
@@ -587,6 +696,58 @@ func TestStatusDispatch(t *testing.T) {
 	})
 }
 
+// TestStatusV2DecodeVariants pins the API 2.0 status output for the
+// display states the canned v2 packet in TestStatusDispatch does not
+// reach: the down alarm off, every Digits mode (including the
+// unknown-mode fallback), and a wired (zero-signal) clock
+func TestStatusV2DecodeVariants(t *testing.T) {
+	// v2Packet builds a 40-byte status packet with the interesting
+	// display bytes parameterized; the rest mirror the known-good
+	// packet from TestStatusDispatch
+	v2Packet := func(downAlarm, digits, wifi uint8) []byte {
+		packet := make([]byte, api2PacketSize)
+		packet[0] = 0x01 // DeviceType
+		copy(packet[1:5], []byte{192, 168, 42, 204})
+		copy(packet[5:11], []byte{0x70, 0xb3, 0xd5, 0x75, 0x68, 0xe2})
+		copy(packet[11:13], []byte{0x05, 0x00}) // FirmwareVer
+		packet[19] = 0x41                       // up timer, running, H:M:S
+		packet[20] = downAlarm
+		packet[21] = 3 // Days
+		packet[22] = digits
+		packet[23] = wifi
+		copy(packet[24:40], "POE_Clock")
+		return packet
+	}
+	tests := []struct {
+		name   string
+		packet []byte
+		want   string
+	}{
+		{name: "down alarm off", packet: v2Packet(0x05, 0x22, 58), want: "Down alarm off"},
+		{name: "down alarm on", packet: v2Packet(0x85, 0x22, 58), want: "Down alarm on (5 seconds)"},
+		{name: "digits 4/6", packet: v2Packet(0x85, 0x00, 58), want: "Digits 4/6"},
+		{name: "digits D:H:M:S", packet: v2Packet(0x85, 0x01, 58), want: "Digits (D):H:M:S"},
+		{name: "digits unknown", packet: v2Packet(0x85, 0x03, 58), want: "Digits unknown"},
+		{name: "wifi wired", packet: v2Packet(0x85, 0x22, 0), want: "Wifi wired"},
+		{name: "wifi signal", packet: v2Packet(0x85, 0x22, 58), want: "Wifi -58 dBm"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg, _ := newFakeConfig(tc.packet)
+			var err error
+			out := captureOutput(t, &os.Stdout, func() {
+				err = runCommand(t, cfg, "status", "192.168.42.204")
+			})
+			if err != nil {
+				t.Fatalf("status: %v", err)
+			}
+			if !strings.Contains(out, tc.want) {
+				t.Errorf("status output missing %q:\n%s", tc.want, out)
+			}
+		})
+	}
+}
+
 // TestSetTimeDispatch checks that up_set_time/down_set_time send the
 // expected 6-byte payloads, including the correct leading opcode for
 // each (the historical #19 bug hardcoded the up opcode)
@@ -633,6 +794,40 @@ func TestSetTimeRangeRejectDispatch(t *testing.T) {
 	}
 	if len(conns) > 0 {
 		t.Error("should not have dialed the clock with an invalid time")
+	}
+}
+
+// TestSetTimeComponentRejectDispatch drives out-of-range minute,
+// second, tenths, and hundredths components through the command tree
+// (the hours component is covered by TestSetTimeRangeRejectDispatch);
+// each must fail before the clock is ever dialed
+func TestSetTimeComponentRejectDispatch(t *testing.T) {
+	tests := []struct {
+		name string
+		time string
+	}{
+		{name: "minute out of range", time: "1:300"},
+		{name: "second out of range", time: "1:2:300"},
+		{name: "tenths out of range", time: "1:2:3:300"},
+		{name: "hundredths out of range", time: "1:2:3:4:300"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg, conns := newFakeConfig([]byte{'A', 0x00})
+			err := runCommand(t, cfg, "up_set_time", "192.168.42.204", tc.time)
+			if err == nil {
+				t.Fatalf("ctm up_set_time %s: expected an error", tc.time)
+			}
+			if !strings.Contains(err.Error(), "out of range") {
+				t.Errorf("error %q does not mention the range problem", err)
+			}
+			if !strings.Contains(err.Error(), `"300"`) {
+				t.Errorf("error %q does not call out the offending component", err)
+			}
+			if len(conns) > 0 {
+				t.Error("should not have dialed the clock with an invalid time")
+			}
+		})
 	}
 }
 
@@ -837,6 +1032,68 @@ func TestUnknownSubcommand(t *testing.T) {
 	}
 }
 
+// TestNoSubcommand checks the root Exec's help fallback: bare ctm
+// must ask for help rather than crash or silently succeed
+func TestNoSubcommand(t *testing.T) {
+	cfg := &clockConfig{}
+	err := runCommand(t, cfg)
+	if err == nil {
+		t.Fatal("expected flag.ErrHelp when no subcommand is given")
+	}
+	if !errors.Is(err, flag.ErrHelp) {
+		t.Errorf("error %v, want flag.ErrHelp", err)
+	}
+}
+
+// TestRunExitCodes pins run()'s exit-code contract, which main() is a
+// one-line shim over: success exits 0, errors exit 1 with a "ctm: "
+// line on stderr, and help requests exit 1 after ffcli has already
+// printed the usage to stderr (so no extra error line is added)
+func TestRunExitCodes(t *testing.T) {
+	t.Run("success exits 0", func(t *testing.T) {
+		cfg, _ := newFakeConfig([]byte{'A', 0x00})
+		if code := run(cfg, []string{"up_run", "192.168.42.204"}); code != 0 {
+			t.Errorf("exit code = %d, want 0", code)
+		}
+	})
+	t.Run("error exits 1 and reports on stderr", func(t *testing.T) {
+		dialErr := errors.New("clock unreachable")
+		cfg := &clockConfig{
+			timeout: time.Second,
+			port:    defaultPort,
+			dial: func(string, time.Duration) (net.Conn, error) {
+				return nil, dialErr
+			},
+		}
+		var code int
+		stderr := captureOutput(t, &os.Stderr, func() {
+			code = run(cfg, []string{"up_run", "192.168.42.204"})
+		})
+		if code != 1 {
+			t.Errorf("exit code = %d, want 1", code)
+		}
+		if !strings.Contains(stderr, "ctm: clock unreachable") {
+			t.Errorf("stderr = %q, want the ctm-prefixed error line", stderr)
+		}
+	})
+	t.Run("help exits 1 with usage, no error line", func(t *testing.T) {
+		cfg := &clockConfig{}
+		var code int
+		stderr := captureOutput(t, &os.Stderr, func() {
+			code = run(cfg, nil)
+		})
+		if code != 1 {
+			t.Errorf("exit code = %d, want 1", code)
+		}
+		if !strings.Contains(stderr, "USAGE") {
+			t.Errorf("stderr = %q, want the usage ffcli prints for bare ctm", stderr)
+		}
+		if strings.Contains(stderr, "ctm: ") {
+			t.Errorf("stderr = %q, a help request must not add the error line", stderr)
+		}
+	})
+}
+
 // TestDialClockHappyPath exercises the real dialer against a
 // loopback UDP socket: written commands must arrive, replies must
 // round-trip, and the deadline must not fire
@@ -921,6 +1178,50 @@ func TestDialClockBadAddress(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "connecting to") {
 		t.Errorf("error %q does not mention the connection failure", err)
+	}
+}
+
+// TestProductionDialPath drives a mode command through the real
+// production wiring: no fake dialer, so dialOrTest takes the
+// dialClock branch and the bytes travel over a real loopback UDP
+// socket.  This is the only test that exercises the full path the
+// shipped binary takes - command tree, dialOrTest, dialClock, socket -
+// rather than the fakes the other dispatch tests install.
+func TestProductionDialPath(t *testing.T) {
+	server, err := net.ListenUDP("udp", &net.UDPAddr{IP: net.ParseIP("127.0.0.1")})
+	if err != nil {
+		t.Skipf("cannot listen on loopback UDP: %v", err)
+	}
+	defer server.Close()
+
+	// record what arrives, then ack like a clock would
+	got := make(chan []byte, 1)
+	go func() {
+		buf := make([]byte, maxBufferSize)
+		n, client, err := server.ReadFrom(buf)
+		if err != nil {
+			return
+		}
+		got <- buf[:n]
+		_, _ = server.WriteTo([]byte{'A', 0x00}, client)
+	}()
+
+	// cfg.dial stays nil so dialOrTest takes the production dialClock
+	// path.  The loopback server's port travels as a -port flag because
+	// building the command tree rebinds cfg.port to the default.
+	cfg := &clockConfig{}
+	port := strconv.Itoa(server.LocalAddr().(*net.UDPAddr).Port)
+	err = runCommand(t, cfg, "-port", port, "time", "127.0.0.1")
+	if err != nil {
+		t.Fatalf("ctm time 127.0.0.1: %v", err)
+	}
+	select {
+	case b := <-got:
+		if string(b) != locatorCommands["time_mode"] {
+			t.Errorf("production path sent % x, want % x", b, locatorCommands["time_mode"])
+		}
+	default:
+		t.Fatal("the echo server never saw the command")
 	}
 }
 
@@ -1013,6 +1314,74 @@ func TestNonEPIPEWriteNoHintDispatch(t *testing.T) {
 	}
 	if strings.Contains(err.Error(), "Local Network permission") {
 		t.Errorf("error %q carries the Local Network hint for a non-EPIPE write", err)
+	}
+}
+
+// TestDialErrorDispatch makes sure a failed dial surfaces the dialer's
+// error verbatim through every command family: status (getStatus), a
+// mode command (sendCommand), and a payload command (sendPayload)
+func TestDialErrorDispatch(t *testing.T) {
+	dialErr := errors.New("no route to clock")
+	newConfig := func() *clockConfig {
+		return &clockConfig{
+			timeout: time.Second,
+			port:    defaultPort,
+			dial: func(string, time.Duration) (net.Conn, error) {
+				return nil, dialErr
+			},
+		}
+	}
+	for _, argv := range [][]string{
+		{"status", "192.168.42.204"},
+		{"up_run", "192.168.42.204"},
+		{"up_set_time", "192.168.42.204", "0:30"},
+	} {
+		t.Run(strings.Join(argv, " "), func(t *testing.T) {
+			err := runCommand(t, newConfig(), argv...)
+			if err == nil {
+				t.Fatalf("ctm %v: expected an error", argv)
+			}
+			if !errors.Is(err, dialErr) {
+				t.Errorf("error %q does not carry the dialer's error verbatim", err)
+			}
+		})
+	}
+}
+
+// TestReadErrorDispatch drives commands against a clock whose reads
+// fail with a plain (non-deadline) error: the friendly readError
+// wrapper must explain the failure without inventing a timeout
+func TestReadErrorDispatch(t *testing.T) {
+	readErr := errors.New("socket flaked out")
+	newConfig := func() *clockConfig {
+		return &clockConfig{
+			timeout: time.Second,
+			port:    defaultPort,
+			dial: func(string, time.Duration) (net.Conn, error) {
+				return &fakeConn{readErr: readErr}, nil
+			},
+		}
+	}
+	for _, argv := range [][]string{
+		{"status", "192.168.42.204"},
+		{"up_run", "192.168.42.204"},
+		{"up_set_time", "192.168.42.204", "0:30"},
+	} {
+		t.Run(strings.Join(argv, " "), func(t *testing.T) {
+			err := runCommand(t, newConfig(), argv...)
+			if err == nil {
+				t.Fatalf("ctm %v: expected an error", argv)
+			}
+			if !errors.Is(err, readErr) {
+				t.Errorf("error %q does not carry the read error", err)
+			}
+			if !strings.Contains(err.Error(), "reading response from") {
+				t.Errorf("error %q does not use the readError wrapper", err)
+			}
+			if strings.Contains(err.Error(), "did not respond") {
+				t.Errorf("error %q misreports a plain read failure as a timeout", err)
+			}
+		})
 	}
 }
 
