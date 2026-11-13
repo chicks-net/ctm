@@ -1,0 +1,24 @@
+# codecov.yml — status-check thresholds for Codecov (issue #70)
+#
+# Coverage uploads have run in .github/workflows/go-ci.yml since PR #69;
+# this config was deferred until real codecov data had accumulated
+# (per the issue's checklist).
+#
+# ignores are deliberately empty: codecov's ignore works at file level, and
+# ignoring main.go to hide its only uncovered function (the one-line main()
+# shim; flag.ExitOnError's -h/exit paths became testable when PR #85
+# extracted run()) would also hide the command tree and every command
+# function — far more real coverage than ~0.3% is worth.
+coverage:
+  status:
+    project:
+      default:
+        # whole-repo floor; baseline is 96.9% of statements (go tool cover,
+        # PR #85). codecov parses Go coverprofiles as line coverage, so keep
+        # cushion below the baseline and allow 1% drift for parsing noise.
+        target: 95%
+        threshold: 1%
+    patch:
+      default:
+        # lines changed in a PR should be well covered too
+        target: 90%
