@@ -166,10 +166,16 @@ func localNetworkHint(err error) string {
 // connections: production code passes dialClock, tests pass a fake
 type dialer func(address string, timeout time.Duration) (net.Conn, error)
 
+// rawDialer is the low-level network dial call that dialClock wraps:
+// net.Dial in production, a stub in tests.  Injecting it lets the
+// tests cover the deadline-failure branch, which a real UDP socket
+// never produces.
+type rawDialer func(network, address string) (net.Conn, error)
+
 // dial the clock and arm a read deadline so a silent clock cannot
 // block the caller forever
-func dialClock(address string, timeout time.Duration) (net.Conn, error) {
-	conn, err := net.Dial("udp", address)
+func dialClock(raw rawDialer, address string, timeout time.Duration) (net.Conn, error) {
+	conn, err := raw("udp", address)
 	if err != nil {
 		return nil, fmt.Errorf("connecting to %s: %w", address, err)
 	}
@@ -225,7 +231,7 @@ func (c *clockConfig) dialOrTest(address string, timeout time.Duration) (net.Con
 	if c.dial != nil {
 		return c.dial(address, timeout)
 	}
-	return dialClock(address, timeout)
+	return dialClock(net.Dial, address, timeout)
 }
 
 // functions that talk to the clock

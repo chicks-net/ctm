@@ -99,8 +99,11 @@ Wire format structs (all use `encoding/binary` with big-endian):
 
 `main_test.go` covers the wire structs, command bytes, time parsing, and subcommand
 dispatch.  Dispatch tests drive the real `ffcli` tree via `newCommandTree` with a
-`fakeConn` installed on `clockConfig.dial`; `dialClock` itself is tested against
-loopback UDP sockets (happy path, timeout, bad address).  Coverage is ~83%.
+`fakeConn` installed on `clockConfig.dial`; `dialClock` itself takes an injectable
+`rawDialer` (net.Dial in production) and is tested against loopback UDP sockets
+(happy path, timeout, bad address) plus a stub for the deadline-failure branch a
+real socket never produces.  Coverage is ~97%; what remains is the `main` shim
+and unreachable defensive `binary.Read`/`binary.Write` error branches.
 `-h` cannot be tested in-process because the flag sets use `flag.ExitOnError`.
 Fuzz targets (`FuzzExtractTimePart`, `FuzzParseColorSpec`, `FuzzParseDimmerLevel`,
 `FuzzDisplayModeString`, `FuzzStatusDecode`) run their seed corpora as ordinary tests under `go test ./...`;

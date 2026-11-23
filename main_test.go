@@ -23,11 +23,12 @@ import (
 // like a real socket would not - the functions under test never
 // should, and the dispatch tests below assert they do not.
 type fakeConn struct {
-	sendBuf     bytes.Buffer // what the program writes
-	reply       []byte       // canned packet for the first Read
-	writeErr    error        // when set, Write fails with this error
-	readErr     error        // when set, Read fails with this error
-	closeCalled bool
+	sendBuf         bytes.Buffer // what the program writes
+	reply           []byte       // canned packet for the first Read
+	writeErr        error        // when set, Write fails with this error
+	readErr         error        // when set, Read fails with this error
+	readDeadlineErr error        // when set, SetReadDeadline fails with this error
+	closeCalled     bool
 }
 
 func (fc *fakeConn) Write(p []byte) (int, error) {
@@ -57,8 +58,14 @@ func (fc *fakeConn) Close() error {
 func (fc *fakeConn) LocalAddr() net.Addr                { return nil }
 func (fc *fakeConn) RemoteAddr() net.Addr               { return nil }
 func (fc *fakeConn) SetDeadline(t time.Time) error      { return nil }
-func (fc *fakeConn) SetReadDeadline(t time.Time) error  { return nil }
 func (fc *fakeConn) SetWriteDeadline(t time.Time) error { return nil }
+
+func (fc *fakeConn) SetReadDeadline(t time.Time) error {
+	if fc.readDeadlineErr != nil {
+		return fc.readDeadlineErr
+	}
+	return nil
+}
 
 // newFakeConfig builds a clockConfig whose dialer hands out the given
 // canned reply, and returns the config plus a channel receiving each
@@ -1113,7 +1120,7 @@ func TestDialClockHappyPath(t *testing.T) {
 		_, _ = server.WriteTo(buf[:n], client)
 	}()
 
-	conn, err := dialClock(server.LocalAddr().String(), time.Second)
+	conn, err := dialClock(net.Dial, server.LocalAddr().String(), time.Second)
 	if err != nil {
 		t.Fatalf("dialClock: %v", err)
 	}
@@ -1143,7 +1150,7 @@ func TestDialClockTimeout(t *testing.T) {
 
 	const timeout = 300 * time.Millisecond
 	start := time.Now()
-	conn, err := dialClock(blackhole.LocalAddr().String(), timeout)
+	conn, err := dialClock(net.Dial, blackhole.LocalAddr().String(), timeout)
 	if err != nil {
 		t.Fatalf("dialClock: %v", err)
 	}
@@ -1172,12 +1179,33 @@ func TestDialClockTimeout(t *testing.T) {
 // TestDialClockBadAddress makes sure an undialable address is a
 // clean error, not a panic
 func TestDialClockBadAddress(t *testing.T) {
-	_, err := dialClock("", time.Second)
+	_, err := dialClock(net.Dial, "", time.Second)
 	if err == nil {
 		t.Fatal("expected an error for an empty address")
 	}
 	if !strings.Contains(err.Error(), "connecting to") {
 		t.Errorf("error %q does not mention the connection failure", err)
+	}
+}
+
+// TestDialClockDeadlineFailure covers the case where the socket takes
+// the connection but refuses a read deadline: dialClock must close
+// the conn rather than leak it, and the error must name the address.
+// A real UDP socket never refuses a deadline, so this test drives
+// the raw dial seam instead of the loopback servers above.
+func TestDialClockDeadlineFailure(t *testing.T) {
+	fc := &fakeConn{readDeadlineErr: errors.New("deadline refused")}
+	_, err := dialClock(func(network, address string) (net.Conn, error) {
+		return fc, nil
+	}, "192.0.2.1:7372", time.Second)
+	if err == nil {
+		t.Fatal("expected an error when the read deadline cannot be armed")
+	}
+	if !strings.Contains(err.Error(), "setting read deadline on 192.0.2.1:7372") {
+		t.Errorf("error %q does not explain the deadline failure", err)
+	}
+	if !fc.closeCalled {
+		t.Error("conn was left open after the deadline failure")
 	}
 }
 
