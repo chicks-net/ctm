@@ -15,6 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      # mint the per-run OIDC token for the codecov upload below
+      id-token: write
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
@@ -44,15 +46,21 @@ jobs:
         run: go test ./... -covermode=atomic -coverprofile=coverage.out
 
       # publishes the coverage report that the README badge and awesome-go's
-      # submission requirements link to; requires the CODECOV_TOKEN secret
-      # because codecov no longer supports tokenless uploads from CI pushes
+      # submission requirements link to; authenticates with a per-run OIDC
+      # token (via id-token: write above) instead of the standing
+      # CODECOV_TOKEN secret (chicks-projects#154) - nothing to rotate,
+      # nothing to expire a year from now.
+      # fail_ci_if_error: codecov swallows upload failures by default, and
+      # the codecov checks aren't required status checks, so a fail-green
+      # upload would silently stop coverage reports from ever arriving
       - name: Upload coverage to Codecov
-        # plain pull_request triggers don't inject secrets into fork PRs, so
-        # the upload can't authenticate there - skip the doomed attempt;
+        # fork PRs and Dependabot runs can't mint OIDC tokens (GitHub
+        # restricts id-token: write for both), so skip the doomed attempt;
         # same-repo PRs (incl. Renovate branches) and pushes to main still run
-        if: github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'push'
+        if: (github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'push') && github.actor != 'dependabot[bot]'
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           files: coverage.out
-          token: ${{ secrets.CODECOV_TOKEN }}
+          use_oidc: true
+          fail_ci_if_error: true
           disable_search: true
